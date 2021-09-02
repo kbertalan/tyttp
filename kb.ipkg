@@ -1,0 +1,8 @@
+package kb
+
+modules = Main
+
+sourcedir = "src"
+
+main = Main
+executable = kb
