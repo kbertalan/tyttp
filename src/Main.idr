@@ -3,7 +3,9 @@ module Main
 namespace Request
 
   export
-  data Request a = MkRequest a
+  record Request a where
+    constructor MkRequest
+    body: a
 
   export
   mkRequest : a -> Request a
@@ -20,48 +22,54 @@ namespace Response
     status : Status 
     body : a
 
-  export
-  def : Monoid a => Response a
-  def = MkResponse OK neutral
+namespace Step
 
+  export
+  record Step (a : Type) (b : Type) where
+    constructor MkStep
+    request: Request a
+    response: Response b
 
 namespace Handler
 
-  export
-  data Handler : Type -> Type -> Type where
-    MkHandler : (Request a -> Response b -> Response b) -> Handler a b
+  public export
+  Handler : Type -> Type -> Type -> Type -> Type
+  Handler a b c d = Step a b -> Step c d
 
   export
-  mkHandler : (Request a -> Response b -> Response b) -> Handler a b
-  mkHandler = MkHandler
-
-  export
-  runHandler : Handler a b -> Request a -> Response b -> Response b
-  runHandler (MkHandler f) req res = f req res
-
-  export
-  chain : Handler a b -> Handler a b -> Handler a b
-  chain (MkHandler f) (MkHandler g) = MkHandler $ \req, res =>
-    f req (g req res)
+  run : Handler a b c d -> Step a b -> Step c d
+  run f step = f step
 
 
-hId : Handler a b
-hId = mkHandler $ \req, res => res
+hId : Handler a b a b
+hId = id
 
-hOverwrite : b -> Handler a b
-hOverwrite msg = mkHandler $ \req, res => record { body = msg } res
+hEcho : Handler a b a a
+hEcho (MkStep request response) = MkStep request $ record { body = request.body } response
 
-hAppender : Semigroup b => b -> Handler a b
-hAppender msg = mkHandler $ \req, res => record { body $= (<+> msg) } res
+hMapRequest : (i -> o) -> Handler i a o a
+hMapRequest f (MkStep request response) = MkStep (MkRequest $ f request.body) response
+
+hMapResponse : (i -> o) -> Handler a i a o
+hMapResponse f (MkStep request response) = MkStep request $ record { body $= f } response
+hConstRequest : cnst -> Handler a b cnst b
+hConstRequest x = hMapRequest $ const x
+
+hConstResponse : cnst -> Handler a b a cnst
+hConstResponse x = hMapResponse $ const x
+
 
 main : IO ()
 main = do
   let req = mkRequest "request"
+      res = MkResponse OK ""
       handlers = [
-        hId,
-        hAppender [1],
-        hOverwrite [2],
-        hOverwrite [2] `chain` hAppender [3],
-        hAppender [3] `chain` hOverwrite [2]
+        hId
+        , hEcho
+        , hEcho . hMapRequest (<+> "-appended")
+        , hMapResponse (<+> "-response") . hEcho
+        , hEcho . hConstRequest "const-request"
+        , hConstResponse "const-response" . hEcho
         ]
-  for_ handlers $ \h => printLn $ body $ runHandler h req def
+  for_ handlers $ \handler => printLn $ body $ response $ run handler $ MkStep req res
+

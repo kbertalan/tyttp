@@ -17,4 +17,4 @@ repl:
 	rlwrap $(idris2) --repl $(package)
 
 run: build
-	node build/exec/kb
+	bash -c 'time node build/exec/kb'
