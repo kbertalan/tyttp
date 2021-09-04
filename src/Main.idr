@@ -1,15 +1,15 @@
 module Main
 
 import Control.Monad.Error.Interface
-import Control.Monad.Maybe
+import Control.Monad.Error.Either
 import Data.String
 import Handler
 import Handler.Combinators
 
-parseIntegerMaybeT : (Monad m, Num a, Neg a) => String -> MaybeT m a
-parseIntegerMaybeT s = case parseInteger s of
-  Nothing => nothing
-  Just a  => just a
+orThrow : MonadError e m => Maybe a -> e -> m a
+orThrow m e = case m of
+  Just a  => pure a
+  Nothing => throwError e
 
 exampleBasic : Step String String -> IO ()
 exampleBasic initialStep = do
@@ -38,23 +38,21 @@ exampleRunWithFoldlM initialStep = do
 
   putStrLn result.response.body
 
-Monad m => MonadError Unit (MaybeT m) where
-  throwError e = nothing
-  catchError ma f = MkMaybeT $ do
-    result <- runMaybeT ma
-    case result of
-        Nothing => runMaybeT $ f ()
-        Just a  => pure $ Just a
+data Error = ParseError String
+
+parseIntegerM : MonadError Error m => String -> m Int
+parseIntegerM s = parseInteger s `orThrow` ParseError ("Could not parse as int: " <+> s)
 
 exampleErrorHandling : Step String String -> IO ()
 exampleErrorHandling initialStep = do
   putStrLn $ "\nErrors: " <+> initialStep.request.body <+> "\n"
 
-  let handler = hParseRequest {a=Int} parseIntegerMaybeT >=> hEcho
-  result <- runMaybeT $ handler initialStep
+  let handler = hParseRequest parseIntegerM >=> hEcho {m = EitherT Error IO}
+  result <- runEitherT $ handler initialStep
+
   case result of
-    Nothing => putStrLn "Error during parsing int"
-    Just r  => putStrLn $ show r.response.body
+    Left  (ParseError e) => putStrLn e
+    Right a => putStrLn $ show a.response.body
 
 main : IO ()
 main = do
