@@ -11,6 +11,10 @@ namespace Request
   mkRequest : a -> Request a
   mkRequest = MkRequest
 
+  export
+  Functor Request where
+    map f req = record { body $= f } req
+
 namespace Response
 
   public export
@@ -22,6 +26,10 @@ namespace Response
     status : Status 
     body : a
 
+  export
+  Functor Response where
+    map f res = record { body $= f } res
+
 namespace Step
 
   export
@@ -30,39 +38,39 @@ namespace Step
     request : Request a
     response : Response b
 
+  export
+  Bifunctor Step where
+    bimap f g step = record { request $= map f, response $= map g } step
+
 namespace Handler
 
   public export
   Handler : (Type -> Type) -> Type -> Type -> Type -> Type -> Type
   Handler m a b c d = Step a b -> m (Step c d)
 
-  export
-  run : Functor m => Handler m a b c d -> Step a b -> m (Step c d)
-  run f step = f step
-
-
 hId : Applicative m => Handler m a b a b
 hId = pure . id
 
 hEcho : Applicative m => Handler m a b a a
-hEcho (MkStep request response) = pure $ MkStep request $ record { body = request.body } response
+hEcho step = pure $ mapSnd (const step.request.body) step
 
 hMapRequest : Applicative m => (i -> o) -> Handler m i a o a
-hMapRequest f (MkStep request response) = pure $ MkStep (MkRequest $ f request.body) response
+hMapRequest f step = pure $ mapFst f step
 
 hMapResponse : Applicative m => (i -> o) -> Handler m a i a o
-hMapResponse f (MkStep request response) = pure $ MkStep request $ record { body $= f } response
+hMapResponse f step = pure $ mapSnd f step
 
-hConstRequest : Applicative m => cnst -> Handler m a b cnst b
+hConstRequest : Applicative m => c-> Handler m a b c b
 hConstRequest x = hMapRequest $ const x
 
-hConstResponse : Applicative m => cnst -> Handler m a b a cnst
+hConstResponse : Applicative m => c -> Handler m a b a c
 hConstResponse x = hMapResponse $ const x
 
 main : IO ()
 main = do
   let req = mkRequest "request"
       res = MkResponse OK ""
+      initialStep = MkStep req res
       handlers =
         [ hId
         , hEcho
@@ -72,6 +80,13 @@ main = do
         , hEcho >=> hConstResponse "const-response"
         ]
   for_ handlers $ \handler => do
-      result <- run handler $ MkStep req res
-      printLn result.response.body
+      result <- handler initialStep
+      putStrLn result.response.body
+
+  putStrLn "\nfoldlM\n"
+
+  let collection = [ hConstRequest "init", hMapRequest (<+> "-req"), hEcho, hMapResponse (<+> "-res") ] 
+  step <- foldlM (flip ($)) initialStep collection
+
+  putStrLn step.response.body
 
