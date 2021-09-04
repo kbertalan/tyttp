@@ -1,4 +1,5 @@
-package=kb.ipkg
+package=tyttp.ipkg
+executable=tyttp
 idris2=idris2
 codegen=node
 
@@ -17,4 +18,4 @@ repl:
 	rlwrap $(idris2) --repl $(package)
 
 run: build
-	bash -c 'time node build/exec/kb'
+	bash -c 'time node build/exec/$(executable)'

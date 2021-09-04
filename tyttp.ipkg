@@ -5,4 +5,4 @@ modules = Main
 sourcedir = "src"
 
 main = Main
-executable = kb
+executable = tyttp
