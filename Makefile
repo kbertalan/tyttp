@@ -19,3 +19,16 @@ repl:
 
 run: build
 	bash -c 'time node build/exec/$(executable)'
+
+install:
+	$(idris2) --install $(package)
+
+test-clean:
+	make -C tests clean
+
+test-build:
+	make -C tests build
+
+test: test-build
+	make -C tests test
+

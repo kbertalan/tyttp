@@ -1,6 +1,6 @@
-package kb
+package tyttp
 
-modules = Main
+modules = Main, Handler, Handler.Combinators
 
 depends = base
 

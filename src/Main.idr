@@ -11,20 +11,6 @@ orThrow m e = case m of
   Just a  => pure a
   Nothing => throwError e
 
-exampleBasic : Step String String -> IO ()
-exampleBasic initialStep = do
-  let handlers =
-        [ hId
-        , hEcho
-        , hMapRequest (<+> "-appended") >=> hEcho
-        , hEcho >=> hMapResponse (<+> "-response")
-        , hConstRequest "const-request" >=> hEcho
-        , hEcho >=> hConstResponse "const-response"
-        ]
-  for_ handlers $ \handler => do
-      result <- handler initialStep
-      putStrLn result.response.body
-
 exampleRunWithFoldlM : Step String String -> IO ()
 exampleRunWithFoldlM initialStep = do
   putStrLn "\nfoldlM\n"
@@ -60,7 +46,6 @@ main = do
       res = MkResponse OK ""
       step = MkStep req res
 
-  exampleBasic step
   exampleRunWithFoldlM step
   exampleErrorHandling step
   exampleErrorHandling $ MkStep (MkRequest "134") res
