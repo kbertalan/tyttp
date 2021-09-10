@@ -18,7 +18,7 @@ A type safe _experimental_ web framework for idris2 targeting node js.
 
 or
 
-    watch -c make run
+    make dev
 
 # Distribution
 

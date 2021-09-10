@@ -1,9 +1,9 @@
 import { terser } from "rollup-plugin-terser";
 
 export default {
-  input: "build/exec/kb",
+  input: "build/exec/tyttp",
   output: [
-    { file: "build/dist/kb.js", format: "cjs" },
-    { file: "build/dist/kb.min.js", format: "cjs", plugins: [terser()] }
+    { file: "build/dist/tyttp.js", format: "cjs" },
+    { file: "build/dist/tyttp.min.js", format: "cjs", plugins: [terser()] }
   ],
 };
