@@ -10,8 +10,9 @@ record Subscriber (m : Type -> Type) (e : Type) (a : Type) where
   onSucceded: () -> m ()
   onFailed: e -> m ()
 
-data Publisher : (Type -> Type) -> Type -> Type -> Type where
-  MkPublisher : (Subscriber m e a -> m ()) -> Publisher m e a
+record Publisher (m : Type -> Type) (e : Type) (a : Type) where
+  constructor MkPublisher
+  subscribe : Subscriber m e a -> m ()
 
 namespace Node
 
@@ -68,36 +69,35 @@ hConsumeBody step = do
   cache <- newIORef ""
   let publisher = MkPublisher $ \s => do
     let subscriber = MkSubscriber
-                       (\a => modifyIORef cache (<+> a))
-                       (\_ => readIORef cache >>= s.onNext >> s.onSucceded ())
-                       (\e => s.onFailed e)
+          (\a => modifyIORef cache (<+> a))
+          (\_ => readIORef cache >>= s.onNext >>= s.onSucceded)
+          (\e => s.onFailed e)
 
-    MkPublisher subscribe <- pure step.request.body
-    subscribe subscriber
+    step.request.body.subscribe subscriber
 
   hConstRequest publisher step
-
 
 main : IO ()
 main = do
   stream <- Node.Stream.require
   readable <- stream.createReadable
 
-  let publisher = MkPublisher $ \s => readable.subscribe { e = String } s
+  let publishFromReadable = MkPublisher $ \s => readable.subscribe { e = String } s
 
-  let req = MkRequest publisher
+  let req = MkRequest publishFromReadable
       res = MkResponse OK ()
       handler = hConsumeBody >=> hEcho
 
   result <- handler $ MkStep req res
 
-  readable.push "Stream first element\n"
-  readable.push "Stream second element\n"
-  readable.pushEnd
-
   let actions = MkSubscriber
         (\a => putStrLn a)
         (\_ => putStrLn "Stream finished")
         (\e => putStrLn $ "Error happened: " <+> e)
-  MkPublisher subscribe <- pure result.response.body
-  subscribe actions
+
+  result.response.body.subscribe actions
+
+  readable.push "Stream first element\n"
+  readable.push "Stream second element\n"
+  readable.pushEnd
+
