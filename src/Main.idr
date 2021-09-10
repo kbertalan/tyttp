@@ -1,13 +1,17 @@
 module Main
 
+import Data.IORef
 import Handler
 import Handler.Combinators
 
-record Stream (m : Type -> Type) (e : Type) (a : Type) where
-  constructor MkStream
+record Subscriber (m : Type -> Type) (e : Type) (a : Type) where
+  constructor MkSubscriber
   onNext: a -> m ()
   onSucceded: () -> m ()
   onFailed: e -> m ()
+
+data Publisher : (Type -> Type) -> Type -> Type -> Type where
+  MkPublisher : (Subscriber m e a -> m ()) -> Publisher m e a
 
 namespace Node
 
@@ -51,13 +55,27 @@ namespace Node
     ffi_subscribeReadable : {0 e: Type } -> Readable -> (String -> PrimIO ()) -> (() -> PrimIO ()) -> (e -> PrimIO ()) -> PrimIO ()
 
     export
-    (.subscribe) : {0 e : Type} -> Readable -> Main.Stream IO e String -> IO ()
-    (.subscribe) r (MkStream onNext onSucceded onFailed) = do
+    (.subscribe) : {0 e : Type} -> Readable -> Subscriber IO e String -> IO ()
+    (.subscribe) r (MkSubscriber onNext onSucceded onFailed) = do
       let primData  = \a => toPrim $ onNext a
           primEnd   = \_ => toPrim $ onSucceded ()
           primError = \e => toPrim $ onFailed e
 
       primIO $ ffi_subscribeReadable r primData primEnd primError
+
+hConsumeBody : Handler IO (Publisher IO String String) a (Publisher IO String String) a
+hConsumeBody step = do
+  cache <- newIORef ""
+  let publisher = MkPublisher $ \s => do
+    let subscriber = MkSubscriber
+                       (\a => modifyIORef cache (<+> a))
+                       (\_ => readIORef cache >>= s.onNext >> s.onSucceded ())
+                       (\e => s.onFailed e)
+
+    MkPublisher subscribe <- pure step.request.body
+    subscribe subscriber
+
+  hConstRequest publisher step
 
 
 main : IO ()
@@ -65,15 +83,21 @@ main = do
   stream <- Node.Stream.require
   readable <- stream.createReadable
 
-  let stream = MkStream
-        (\a => putStrLn a)
-        (\_ => putStrLn "Stream finished")
-        (\e => pure ())
+  let publisher = MkPublisher $ \s => readable.subscribe { e = String } s
 
-  readable.subscribe {e = String} stream
+  let req = MkRequest publisher
+      res = MkResponse OK ()
+      handler = hConsumeBody >=> hEcho
 
-  readable.push "Stream first element"
-  readable.push "Stream second element"
+  result <- handler $ MkStep req res
+
+  readable.push "Stream first element\n"
+  readable.push "Stream second element\n"
   readable.pushEnd
 
-  putStrLn "Setup success"
+  let actions = MkSubscriber
+        (\a => putStrLn a)
+        (\_ => putStrLn "Stream finished")
+        (\e => putStrLn $ "Error happened: " <+> e)
+  MkPublisher subscribe <- pure result.response.body
+  subscribe actions

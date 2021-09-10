@@ -32,3 +32,5 @@ test-build:
 test: test-build
 	make -C tests test
 
+dev:
+	find src/ -name *.idr | entr make run
