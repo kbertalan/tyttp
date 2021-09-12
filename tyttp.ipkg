@@ -1,6 +1,6 @@
 package tyttp
 
-modules = Main, Handler, Handler.Combinators
+modules = Handler, Handler.Combinators, Stream, Node.Stream, Node.Stream.Readable
 
 depends = base
 

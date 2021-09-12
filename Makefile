@@ -21,7 +21,7 @@ run: build
 	bash -c 'time node build/exec/$(executable)'
 
 install:
-	$(idris2) --install $(package)
+	$(idris2) --install $(package) --codegen $(codegen)
 
 test-clean:
 	make -C tests clean
