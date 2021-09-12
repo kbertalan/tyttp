@@ -1,39 +1,20 @@
 module Main
 
 import Stream
+import Node.HTTP
 
 main : IO ()
 main = do
-  let subscriber = MkSubscriber
-                    { onNext = \a => putStrLn $ "Next: " <+> a }
-                    { onSucceded = \_ => putStrLn $ "Success" }
-                    { onFailed = \e => putStrLn $ "Error: " <+> e }
-      duplicate = \a => MkPublisher $ \s => s.onNext a >> s.onNext a >>= s.onSucceded
+  http <- require
+  server <- http.createServer
 
-      initial : Publisher IO String String
-      initial = MkPublisher $ \s => s.onNext "a" >> s.onNext "b" >>= s.onSucceded
+  server.onRequest $ \req => \res => do
+    putStrLn "Request received"
+    res.end
+    server.close
 
-      chain : Publisher IO String String
-      chain = do
-        a <- initial
-        duplicate a
+  server.listen 3000
 
-      failingDuplicate : String -> String -> Publisher IO String String
-      failingDuplicate a e = MkPublisher $ \s => s.onNext a >> s.onFailed e
+  putStrLn "OK"
 
-      failingChain : Publisher IO String String
-      failingChain = do
-        a <- initial
-        failingDuplicate a "second is error"
-
-  putStrLn "successful chain:"
-  subscribe chain subscriber
-
-  putStrLn ""
-
-  putStrLn "failing chain:"
-  subscribe failingChain subscriber
-
-  putStrLn ""
-  putStrLn "End of monadic publisher\n"
 
