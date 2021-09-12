@@ -1,5 +1,8 @@
 module Node.HTTP
 
+import Data.Buffer
+import Stream
+
 export
 data HTTP : Type where [external]
 
@@ -51,20 +54,52 @@ namespace Server
   (.close) : Server -> IO ()
   (.close) server = primIO $ ffi_close server
 
-  %foreign "node:lambda: (ty, a) => JSON.stringify(a, null, 2)"
-  ffi_toJsonString : a -> String
+  namespace Headers
 
-  export
-  toJsonString : a -> String
-  toJsonString a = ffi_toJsonString a
+    export
+    data Headers : Type where [external]
 
+    %foreign "node:lambda: () => { return {}; }"
+    ffi_empty : () -> Headers
 
-  %foreign "node:lambda: (ty, a) => console.log(a)"
-  ffi_debugJsValue : a -> PrimIO ()
+    export
+    empty : Headers
+    empty = ffi_empty ()
 
-  export
-  debugJsValue : a -> IO ()
-  debugJsValue a = primIO $ ffi_debugJsValue a
+    %foreign "node:lambda: (name, value) => { const headers = {}[name] = value; return headers; }"
+    ffi_singleton : String -> String -> Headers
+
+    export
+    singleton : String -> String -> Headers
+    singleton name value = ffi_singleton name value
+
+    %foreign "node:lambda: (headers, name, value) => { headers[name] = value; return headers; }"
+    ffi_setHeader : Headers -> String -> String -> PrimIO Headers
+
+    export
+    (.setHeader) : Headers -> String -> String -> IO Headers
+    (.setHeader) headers name value = primIO $ ffi_setHeader headers name value
+
+  namespace Request
+
+    export
+    %foreign "node:lambda: req => req.headers"
+    (.headers) : IncomingMessage -> Headers
+
+    export
+    %foreign "node:lambda: req => req.httpVersion"
+    (.httpVersion) : IncomingMessage -> String
+
+    export
+    %foreign "node:lambda: req => req.method"
+    (.method) : IncomingMessage -> String
+
+    export
+    %foreign "node:lambda: req => req.url"
+    (.url) : IncomingMessage -> String
+    
+ --   %foreign "node:lambda: (req, data, end, error) => { req.on('data', a => data(a)(); req.on('end', () => end()()); req.on('error', e => error(e)());}"
+--    ffi_subscribe : IncomingMessage -> (Buffer -> PrimIO ()) -> (Unit -> PrimIO()) -> (Error -> PrimIO ()) -> PrimIO ()
 
   namespace Response
 
@@ -74,3 +109,17 @@ namespace Server
     export
     (.end) : ServerResponse -> IO ()
     (.end) res = primIO $ ffi_end res
+
+    %foreign "node:lambda: (ty, res, data) => res.write(data)"
+    ffi_write : { 0 a : _ } -> ServerResponse -> a -> PrimIO ()
+
+    export
+    (.write) : ServerResponse -> a -> IO ()
+    (.write) res a = primIO $ ffi_write res a
+
+    %foreign "node:lambda: (res, status, headers) => res.writeHead(status, headers)"
+    ffi_writeHead : ServerResponse -> Int -> Headers -> PrimIO ()
+
+    export
+    (.writeHead) : ServerResponse -> Int -> Headers -> IO ()
+    (.writeHead) res status headers = primIO $ ffi_writeHead res status headers

@@ -9,11 +9,15 @@ main = do
   server <- http.createServer
 
   server.onRequest $ \req => \res => do
-    putStrLn "Request received"
+    let headers = singleton "Content-Type" "text/plain"
+    res.writeHead 200 headers
+
+    res.write "Hello World!"
+ 
     res.end
     server.close
 
-  server.listen 3000
+--  server.listen 3000
 
   putStrLn "OK"
 
