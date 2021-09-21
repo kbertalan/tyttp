@@ -59,9 +59,9 @@ main = do
 
   server.listen 3000
 
---  clientReq <- http.post "http://localhost:3000/" $ \res => putStrLn $ toJsonString res.headers
---  clientReq.write "Hello World!"
---  clientReq.end
+  clientReq <- http.post "http://localhost:3000/" $ \res => putStrLn $ toJsonString res.headers
+  clientReq.write "Hello World!"
+  clientReq.end
 
   putStrLn "OK"
 

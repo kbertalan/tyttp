@@ -40,5 +40,5 @@ ffi_post : HTTP -> String -> (Client.IncomingMessage -> PrimIO ()) -> PrimIO Cli
 
 export
 (.post) : HTTP -> String -> (Client.IncomingMessage -> IO ()) -> IO ClientRequest
-(.post) http url cb = primIO $ ffi_get http url $ \res => toPrim $ cb res
+(.post) http url cb = primIO $ ffi_post http url $ \res => toPrim $ cb res
 
