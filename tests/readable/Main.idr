@@ -8,7 +8,7 @@ import Stream
 import Node.Stream.Readable
 import Node.Stream
 
-hConsumeBody : Handler IO (Publisher IO String String) a (Publisher IO String String) a
+hConsumeBody : Handler IO h1 h2 (Publisher IO String String) a h1 h2 (Publisher IO String String) a
 hConsumeBody step = do
   cache <- newIORef ""
   let publisher = MkPublisher $ \s => do
@@ -28,8 +28,8 @@ main = do
 
   let publishFromReadable = MkPublisher $ \s => readable.subscribe { e = String } s
 
-  let req = MkRequest publishFromReadable
-      res = MkResponse OK ()
+  let req = MkRequest () publishFromReadable
+      res = MkResponse OK () ()
       handler = hConsumeBody >=> hEcho
 
   result <- handler $ MkStep req res

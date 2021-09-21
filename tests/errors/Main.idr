@@ -16,7 +16,7 @@ data Error = ParseError String
 parseIntegerM : MonadError Error m => String -> m Int
 parseIntegerM s = parseInteger s `orThrow` ParseError ("Could not parse as int: " <+> s)
 
-exampleErrorHandling : Step String String -> IO ()
+exampleErrorHandling : Step () () String String -> IO ()
 exampleErrorHandling initialStep = do
   putStrLn $ "\nErrors: " <+> initialStep.request.body <+> "\n"
 
@@ -29,9 +29,9 @@ exampleErrorHandling initialStep = do
 
 main : IO ()
 main = do
-  let res = MkResponse OK ""
-      step = MkStep (MkRequest "request") res
+  let res = MkResponse OK () ""
+      step = MkStep (MkRequest () "request") res
 
   exampleErrorHandling step
-  exampleErrorHandling $ MkStep (MkRequest "134") res
+  exampleErrorHandling $ MkStep (MkRequest () "134") res
 

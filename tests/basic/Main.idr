@@ -3,7 +3,7 @@ module Main
 import Handler
 import Handler.Combinators
 
-exampleBasic : Step String String -> IO ()
+exampleBasic : Step () () String String -> IO ()
 exampleBasic initialStep = do
   let handlers =
         [ hId
@@ -19,5 +19,5 @@ exampleBasic initialStep = do
 
 main : IO ()
 main = do
-  let step = MkStep (MkRequest "request") (MkResponse OK "")
+  let step = MkStep (MkRequest () "request") (MkResponse OK () "")
   exampleBasic step
