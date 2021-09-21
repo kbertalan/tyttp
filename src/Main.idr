@@ -40,29 +40,33 @@ fromNodeRequest nodeReq =
       nodeReq.onError s.onFailed
       nodeReq.onEnd s.onSucceded
 
-main : IO ()
-main = do
-  http <- require
+listenOnHttp : HTTP -> Int -> Handler IO StringHeaders StringHeaders (Publisher IO () String) () StringHeaders StringHeaders a (Publisher IO () String) -> IO Server
+listenOnHttp http port handler = do
   server <- http.createServer
-
-  let handler = hEcho
 
   server.onRequest $ \req => \res => do
     let handlerReq = fromNodeRequest {error = ()} req
-        initialRes = MkResponse OK ([] { a = (String, String)}) ()
+        initialRes = MkResponse OK [] () {h = StringHeaders}
 
     result <- handler $ MkStep handlerReq initialRes
 
     toNodeResponse result.response res
- 
-    server.close
 
-  server.listen 3000
+  server.listen port
+  pure server
 
-  clientReq <- http.post "http://localhost:3000/" $ \res => putStrLn $ toJsonString res.headers
-  clientReq.write "Hello World!"
-  clientReq.end
+main : IO ()
+main = do
+  http <- require
+  server <- listenOnHttp http 3000 hEcho
 
-  putStrLn "OK"
+  defer $ do
+    clientReq <- http.post "http://localhost:3000/" $ \res => do
+      putStrLn res.statusCode
+      onData res putStrLn
+      server.close
 
+    clientReq.write "Hello World!"
+    clientReq.write "With more chunks"
+    clientReq.end
 
