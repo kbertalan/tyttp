@@ -1,6 +1,9 @@
 module Main
 
+import Data.Buffer
+import Data.IORef
 import Handler
+import Handler.Combinators
 import Node
 import Node.HTTP
 import Node.HTTP.Get
@@ -30,22 +33,35 @@ toNodeResponse res nodeRes = do
     mapHeaders : StringHeaders -> IO Node.HTTP.Headers.Headers
     mapHeaders h = foldlM (\hs, (k,v) => hs.setHeader k v) empty h
 
+fromNodeRequest : Node.HTTP.Server.IncomingMessage -> Handler.Request.Request StringHeaders (Publisher IO error a)
+fromNodeRequest nodeReq =
+  MkRequest [] $ MkPublisher $ \s => do
+      nodeReq.onData s.onNext
+      nodeReq.onError s.onFailed
+      nodeReq.onEnd s.onSucceded
 
 main : IO ()
 main = do
   http <- require
   server <- http.createServer
 
-  server.onRequest $ \req => \res => do
-    let handlerRes = MkResponse OK [( "Content-Type", "text/plain" )] $ MkPublisher {e = ()} $ \s => s.onNext "Hello World!" >>= s.onSucceded
+  let handler = hEcho
 
-    toNodeResponse handlerRes res
+  server.onRequest $ \req => \res => do
+    let handlerReq = fromNodeRequest {error = ()} req
+        initialRes = MkResponse OK ([] { a = (String, String)}) ()
+
+    result <- handler $ MkStep handlerReq initialRes
+
+    toNodeResponse result.response res
  
     server.close
 
   server.listen 3000
 
-  ignore $ http.get "http://localhost:3000/" $ \res => putStrLn $ toJsonString res.headers
+--  clientReq <- http.post "http://localhost:3000/" $ \res => putStrLn $ toJsonString res.headers
+--  clientReq.write "Hello World!"
+--  clientReq.end
 
   putStrLn "OK"
 

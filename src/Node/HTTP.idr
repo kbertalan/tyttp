@@ -1,6 +1,5 @@
 module Node.HTTP
 
-import Data.Buffer
 import Stream
 
 export
@@ -97,9 +96,27 @@ namespace Server
     export
     %foreign "node:lambda: req => req.url"
     (.url) : IncomingMessage -> String
-    
- --   %foreign "node:lambda: (req, data, end, error) => { req.on('data', a => data(a)(); req.on('end', () => end()()); req.on('error', e => error(e)());}"
---    ffi_subscribe : IncomingMessage -> (Buffer -> PrimIO ()) -> (Unit -> PrimIO()) -> (Error -> PrimIO ()) -> PrimIO ()
+
+    %foreign "node:lambda: (ty, req, data) => { req.on('data', a => data(a)()) }"
+    ffi_onData : IncomingMessage -> (a -> PrimIO ()) -> PrimIO ()
+
+    export
+    (.onData) : IncomingMessage -> (a -> IO ()) -> IO ()
+    (.onData) req cb = primIO $ ffi_onData req $ \a => toPrim $ cb a
+
+    %foreign "node:lambda: (req, end) => { req.on('end', () => end()()) }"
+    ffi_onEnd : IncomingMessage -> (() -> PrimIO ()) -> PrimIO ()
+
+    export
+    (.onEnd) : IncomingMessage -> (() -> IO ()) -> IO ()
+    (.onEnd) req cb = primIO $ ffi_onEnd req $ \_ => toPrim $ cb ()
+
+    %foreign "node:lambda: (ty, req, error) => { req.on('error', e => error(e)()) }"
+    ffi_onError : IncomingMessage -> (e -> PrimIO ()) -> PrimIO ()
+
+    export
+    (.onError) : IncomingMessage -> (e -> IO ()) -> IO ()
+    (.onError) req cb = primIO $ ffi_onError req $ \e => toPrim $ cb e
 
   namespace Response
 
