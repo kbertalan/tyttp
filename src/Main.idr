@@ -1,7 +1,9 @@
 module Main
 
 import Stream
+import Node
 import Node.HTTP
+import Node.HTTP.Get
 
 main : IO ()
 main = do
@@ -17,7 +19,9 @@ main = do
     res.end
     server.close
 
---  server.listen 3000
+  server.listen 3000
+
+  ignore $ http.get "http://localhost:3000/" $ \res => putStrLn $ toJsonString res.headers
 
   putStrLn "OK"
 
