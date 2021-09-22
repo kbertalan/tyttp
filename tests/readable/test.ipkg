@@ -1,8 +1,0 @@
-package test
-
-depends = tyttp
-modules = Main
-main = Main
-sourcedir = "."
-executable = test
-opts = "--no-color --console-width 0"

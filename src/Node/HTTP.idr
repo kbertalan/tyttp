@@ -1,7 +1,5 @@
 module Node.HTTP
 
-import Stream
-
 export
 data HTTP : Type where [external]
 

@@ -3,8 +3,8 @@ module Main
 import Control.Monad.Error.Interface
 import Control.Monad.Error.Either
 import Data.String
-import Handler
-import Handler.Combinators
+import TyTTP
+import TyTTP.Combinators
 
 orThrow : MonadError e m => Maybe a -> e -> m a
 orThrow m e = case m of

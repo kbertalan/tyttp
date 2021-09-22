@@ -1,6 +1,7 @@
-module Handler.Combinators
+module TyTTP.Combinators
 
-import Handler
+import TyTTP.Handler
+import TyTTP.Request
 import Control.Monad.Error.Interface
 
 export

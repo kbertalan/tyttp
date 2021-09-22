@@ -1,7 +1,7 @@
 module Main
 
-import Handler
-import Handler.Combinators
+import TyTTP
+import TyTTP.Combinators
 
 exampleBasic : Step () () String String -> IO ()
 exampleBasic initialStep = do

@@ -2,17 +2,16 @@ module Main
 
 import Data.Buffer
 import Data.IORef
-import Handler
-import Handler.Combinators
 import Node
 import Node.HTTP
 import Node.HTTP.Get
-import Stream
+import TyTTP
+import TyTTP.Combinators
 
 StringHeaders : Type
 StringHeaders = List (String, String)
 
-toNodeResponse : Handler.Response.Response StringHeaders (Publisher IO error String) -> Node.HTTP.Server.ServerResponse -> IO ()
+toNodeResponse : Response StringHeaders (Publisher IO error String) -> Node.HTTP.Server.ServerResponse -> IO ()
 toNodeResponse res nodeRes = do
   let status = mapStatus res.status
   headers <- mapHeaders res.headers
@@ -23,7 +22,7 @@ toNodeResponse res nodeRes = do
         { onFailed = \e => pure () }
         { onSucceded = \_ => nodeRes.end }
   where
-    mapStatus : Handler.Response.Status -> Int
+    mapStatus : TyTTP.Response.Status -> Int
     mapStatus s = case s of
       OK => 200
       Moved => 302
@@ -33,7 +32,7 @@ toNodeResponse res nodeRes = do
     mapHeaders : StringHeaders -> IO Node.HTTP.Headers.Headers
     mapHeaders h = foldlM (\hs, (k,v) => hs.setHeader k v) empty h
 
-fromNodeRequest : Node.HTTP.Server.IncomingMessage -> Handler.Request.Request StringHeaders (Publisher IO error a)
+fromNodeRequest : Node.HTTP.Server.IncomingMessage -> Request StringHeaders (Publisher IO error a)
 fromNodeRequest nodeReq =
   MkRequest [] $ MkPublisher $ \s => do
       nodeReq.onData s.onNext
