@@ -10,7 +10,7 @@ StringHeaders = List (String, String)
 
 toNodeResponse : Error e => Response StringHeaders (Publisher IO e String) -> Node.HTTP.Server.ServerResponse -> IO ()
 toNodeResponse res nodeRes = do
-  let status = mapStatus res.status
+  let status = res.status.code
   headers <- mapHeaders res.headers
 
   nodeRes.writeHead status headers
@@ -19,13 +19,6 @@ toNodeResponse res nodeRes = do
         { onFailed = \e => pure () }
         { onSucceded = \_ => nodeRes.end }
   where
-    mapStatus : TyTTP.Response.Status -> Int
-    mapStatus s = case s of
-      OK => 200
-      Moved => 302
-      BadRequest => 404
-      InternalError => 500
-
     mapHeaders : StringHeaders -> IO Node.HTTP.Headers.Headers
     mapHeaders h = foldlM (\hs, (k,v) => hs.setHeader k v) empty h
 
