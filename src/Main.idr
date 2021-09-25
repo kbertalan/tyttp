@@ -6,6 +6,7 @@ import Node.HTTP.Server
 import TyTTP
 import TyTTP.Adapter.Node
 import TyTTP.Combinators
+import Node.Error
 
 main : IO ()
 main = do
