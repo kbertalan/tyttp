@@ -30,8 +30,8 @@ exampleErrorHandling initialStep = do
 main : IO ()
 main = do
   let res = MkResponse OK () ""
-      step = MkStep (MkRequest () "request") res
+      step = MkStep (MkRequest GET () "request") res
 
   exampleErrorHandling step
-  exampleErrorHandling $ MkStep (MkRequest () "134") res
+  exampleErrorHandling $ MkStep (MkRequest GET () "134") res
 

@@ -19,5 +19,5 @@ exampleBasic initialStep = do
 
 main : IO ()
 main = do
-  let step = MkStep (MkRequest () "request") (MkResponse OK () "")
+  let step = MkStep (MkRequest GET () "request") (MkResponse OK () "")
   exampleBasic step

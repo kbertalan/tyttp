@@ -24,7 +24,8 @@ toNodeResponse res nodeRes = do
 
 fromNodeRequest : Error e => Node.HTTP.Server.IncomingMessage -> Request StringHeaders (Publisher IO e a)
 fromNodeRequest nodeReq =
-  MkRequest [] $ MkPublisher $ \s => do
+  let method = parse nodeReq.method
+  in MkRequest method [] $ MkPublisher $ \s => do
       nodeReq.onData s.onNext
       nodeReq.onError s.onFailed
       nodeReq.onEnd s.onSucceded
