@@ -22,16 +22,22 @@ toNodeResponse res nodeRes = do
     mapHeaders : StringHeaders -> IO Node.HTTP.Headers.Headers
     mapHeaders h = foldlM (\hs, (k,v) => hs.setHeader k v) empty h
 
-fromNodeRequest : Error e => Node.HTTP.Server.IncomingMessage -> Request StringHeaders (Publisher IO e a)
+fromNodeRequest : Node.HTTP.Server.IncomingMessage -> Request Method StringHeaders (TyTTP.Request.httpBodyOf { monad = IO } { error = NodeError }) String
 fromNodeRequest nodeReq =
   let method = parse nodeReq.method
-  in MkRequest method [] $ MkPublisher $ \s => do
-      nodeReq.onData s.onNext
-      nodeReq.onError s.onFailed
-      nodeReq.onEnd s.onSucceded
+  in mkHttpRequest method [] $ mkHttpRequestBody { b = String } method $ MkPublisher $ \s => do
+        nodeReq.onData s.onNext
+        nodeReq.onError s.onFailed
+        nodeReq.onEnd s.onSucceded
 
 export
-listenOnHttp : HTTP -> Int -> Handler IO StringHeaders StringHeaders (Publisher IO NodeError String) () StringHeaders StringHeaders a (Publisher IO NodeError String) -> IO Server
+listenOnHttp : 
+  HTTP 
+   -> Int 
+   -> Handler IO 
+     Method StringHeaders (TyTTP.Request.httpBodyOf { monad = IO } {error = NodeError}) StringHeaders String ()
+     Method StringHeaders f StringHeaders b (Publisher IO NodeError String)
+   -> IO Server
 listenOnHttp http port handler = do
   server <- http.createServer
 
