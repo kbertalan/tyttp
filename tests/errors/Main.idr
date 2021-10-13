@@ -16,7 +16,7 @@ data Error = ParseError String
 parseIntegerM : MonadError Error m => String -> m Int
 parseIntegerM s = parseInteger s `orThrow` ParseError ("Could not parse as int: " <+> s)
 
-exampleErrorHandling : Step () () String String -> IO ()
+exampleErrorHandling : Step Method () TyTTP.Request.simpleBody () String String -> IO ()
 exampleErrorHandling initialStep = do
   putStrLn $ "\nErrors: " <+> initialStep.request.body <+> "\n"
 

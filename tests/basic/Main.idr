@@ -3,7 +3,7 @@ module Main
 import TyTTP
 import TyTTP.Combinators
 
-exampleBasic : Step () () String String -> IO ()
+exampleBasic : Step Method () TyTTP.Request.simpleBody () String String -> IO ()
 exampleBasic initialStep = do
   let handlers =
         [ hId
