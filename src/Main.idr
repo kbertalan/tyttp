@@ -4,14 +4,16 @@ import Node
 import Node.HTTP.Client
 import Node.HTTP.Server
 import TyTTP
-import TyTTP.Adapter.Node
+import TyTTP.Adapter.Node.HTTP as HTTP
 import TyTTP.Combinators
+import TyTTP.Combinators.HTTP
+import TyTTP.HTTP
 import Node.Error
 
 main : IO ()
 main = do
   http <- require
-  server <- listenOnHttp http 3000 $ \i => hEcho i >>= hToPublisher
+  server <- HTTP.listen http 3000 $ \i => hEcho i >>= hToPublisher
 
   defer $ do
     clientReq <- http.post "http://localhost:3000/" $ \res => do

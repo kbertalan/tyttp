@@ -1,8 +1,6 @@
 module TyTTP.Combinators
 
-import TyTTP.Handler
-import TyTTP.Request
-import TyTTP.Response
+import TyTTP
 import TyTTP.Stream
 import Control.Monad.Error.Interface
 
@@ -50,28 +48,3 @@ hParseRequest parser step = do
   result <- parser step.request.body
   hConstRequest result step
 
-namespace HTTP
-
-  export
-  hToPublisher : Applicative m
-    => { me : Method }
-    -> { a : Type }
-    -> { auto methodProof : me = step.request.method }
-    -> ( step : Step Method h1 (TyTTP.Request.httpBodyOf {error = e} {monad = m}) h2 a ((TyTTP.Request.httpBodyOf {error = e} {monad = m}) me a) )
-    -> m $ Step Method h1 (TyTTP.Request.httpBodyOf {error = e} {monad = m}) h2 a (Publisher m e a)
-  hToPublisher = \s =>
-    let emptyPublisher : Publisher m e a = MkPublisher $ \s => s.onSucceded ()
-        originalPublisher : Lazy (Publisher m e a) = believe_me $ TyTTP.Response.Response.body $ s.response
-        publisher =
-          case me of
-            OPTIONS => emptyPublisher
-            GET => emptyPublisher
-            HEAD => emptyPublisher
-            POST => originalPublisher
-            PUT => originalPublisher
-            DELETE => emptyPublisher
-            TRACE => emptyPublisher
-            CONNECT => emptyPublisher
-            OtherMethod _ => originalPublisher
-    in
-      hConstResponse publisher s

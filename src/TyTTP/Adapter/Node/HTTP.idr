@@ -1,8 +1,9 @@
-module TyTTP.Adapter.Node
+module TyTTP.Adapter.Node.HTTP
 
 import Node.Error
 import Node.HTTP.Server
 import TyTTP
+import TyTTP.HTTP as HTTP
 
 public export
 StringHeaders : Type
@@ -22,23 +23,23 @@ toNodeResponse res nodeRes = do
     mapHeaders : StringHeaders -> IO Node.HTTP.Headers.Headers
     mapHeaders h = foldlM (\hs, (k,v) => hs.setHeader k v) empty h
 
-fromNodeRequest : Node.HTTP.Server.IncomingMessage -> Request Method StringHeaders (TyTTP.Request.httpBodyOf { monad = IO } { error = NodeError }) String
+fromNodeRequest : Node.HTTP.Server.IncomingMessage -> Request Method StringHeaders (HTTP.bodyOf { monad = IO } { error = NodeError }) String
 fromNodeRequest nodeReq =
-  let method = parse nodeReq.method
-  in mkHttpRequest method [] $ mkHttpRequestBody { b = String } method $ MkPublisher $ \s => do
+  let method = parseMethod nodeReq.method
+  in HTTP.mkRequest method [] $ HTTP.mkRequestBody { b = String } method $ MkPublisher $ \s => do
         nodeReq.onData s.onNext
         nodeReq.onError s.onFailed
         nodeReq.onEnd s.onSucceded
 
 export
-listenOnHttp : 
+listen : 
   HTTP 
    -> Int 
    -> Handler IO 
-     Method StringHeaders (TyTTP.Request.httpBodyOf { monad = IO } {error = NodeError}) StringHeaders String ()
+     Method StringHeaders (HTTP.bodyOf { monad = IO } {error = NodeError}) StringHeaders String ()
      Method StringHeaders f StringHeaders b (Publisher IO NodeError String)
    -> IO Server
-listenOnHttp http port handler = do
+listen http port handler = do
   server <- http.createServer
 
   server.onRequest $ \req => \res => do

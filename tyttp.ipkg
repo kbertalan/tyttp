@@ -1,6 +1,6 @@
 package tyttp
 
-modules = TyTTP, TyTTP.Handler, TyTTP.Request, TyTTP.Response, TyTTP.Combinators, TyTTP.Stream
+modules = TyTTP, TyTTP.HTTP, TyTTP.Handler, TyTTP.Request, TyTTP.Response, TyTTP.Combinators, TyTTP.Combinators.HTTP, TyTTP.Stream
 
 depends = base
 
