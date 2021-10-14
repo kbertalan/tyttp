@@ -29,6 +29,20 @@ Eq Method where
   (==) _ _ = False
 
 export
+Show Method where
+  show m = case m of
+    OPTIONS => "OPTIONS" 
+    GET => "GET" 
+    HEAD => "HEAD" 
+    POST => "POST" 
+    PUT => "PUT" 
+    DELETE => "DELETE" 
+    TRACE => "TRACE" 
+    CONNECT => "CONNECT" 
+    OtherMethod str => str
+
+
+export
 parseMethod : String -> Method
 parseMethod str = case str of
   "OPTIONS" => OPTIONS

@@ -36,3 +36,7 @@ namespace Headers
   (.setHeader) : Headers -> String -> String -> IO Headers
   (.setHeader) headers name value = primIO $ ffi_setHeader headers name value
 
+  %foreign "node:lambda: (headers) => __prim_js2idris_array(Object.entries(headers).map(([k,v]) => { return {h:0,a1:k,a2:v}}))"
+  export
+  (.asList) : Headers -> List (String, String)
+

@@ -1,5 +1,6 @@
 module TyTTP.Adapter.Node.HTTP
 
+import Node
 import Node.Error
 import Node.HTTP.Server
 import TyTTP
@@ -30,8 +31,9 @@ toNodeResponse res nodeRes = do
 fromNodeRequest : Node.HTTP.Server.IncomingMessage -> RawHttpRequest { monad = IO } { error = NodeError }
 fromNodeRequest nodeReq =
   let method = parseMethod nodeReq.method
-      path = nodeReq.path
-  in HTTP.mkRequest method path [] $ HTTP.mkRequestBody { b = String } method $ MkPublisher $ \s => do
+      path = nodeReq.url
+      headers = nodeReq.headers.asList
+  in HTTP.mkRequest method path headers $ HTTP.mkRequestBody { b = String } method $ MkPublisher $ \s => do
         nodeReq.onData s.onNext
         nodeReq.onError s.onFailed
         nodeReq.onEnd s.onSucceded
