@@ -33,13 +33,13 @@ fromNodeRequest nodeReq =
 
 export
 listen : 
-  HTTP 
-   -> Int 
+   {auto http : HTTP}
+   -> { default 3000 port : Int }
    -> Handler IO 
      Method StringHeaders (HTTP.bodyOf { monad = IO } {error = NodeError}) StringHeaders String ()
      Method StringHeaders f StringHeaders b (Publisher IO NodeError String)
    -> IO Server
-listen http port handler = do
+listen {http} {port} handler = do
   server <- http.createServer
 
   server.onRequest $ \req => \res => do

@@ -13,7 +13,7 @@ import Node.Error
 main : IO ()
 main = do
   http <- require
-  server <- HTTP.listen http 3000 $ \i => hEcho i >>= hToPublisher
+  server <- HTTP.listen $ \i => hEcho i >>= hToPublisher
 
   defer $ do
     clientReq <- http.post "http://localhost:3000/" $ \res => do
