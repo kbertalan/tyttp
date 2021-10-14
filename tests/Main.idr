@@ -6,7 +6,7 @@ basic : TestPool
 basic = MkTestPool "Basic examples" [] Nothing [ "basic", "errors" ]
 
 node : TestPool
-node = MkTestPool "Node code" [] (Just Node) []
+node = MkTestPool "Node code" [] (Just Node) [ "server" ]
 
 main : IO ()
 main = runner [ basic, node ]

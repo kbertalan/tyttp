@@ -1,9 +1,10 @@
-module Main
+module Error
 
 import Control.Monad.Error.Interface
 import Control.Monad.Error.Either
 import Data.String
 import TyTTP
+import TyTTP.HTTP
 import TyTTP.Combinators
 
 orThrow : MonadError e m => Maybe a -> e -> m a

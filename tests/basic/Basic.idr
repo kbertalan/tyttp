@@ -1,6 +1,7 @@
-module Main
+module Basic
 
 import TyTTP
+import TyTTP.HTTP
 import TyTTP.Combinators
 
 exampleBasic : Step Method () TyTTP.Request.simpleBody () String String -> IO ()

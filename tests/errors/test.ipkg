@@ -1,8 +1,8 @@
 package test
 
 depends = tyttp
-modules = Main
-main = Main
+modules = Error
+main = Error
 sourcedir = "."
 executable = test
 opts = "--no-color --console-width 0"
