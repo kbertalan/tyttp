@@ -59,9 +59,13 @@ public export
 bodyOf : { monad : Type -> Type } -> { error : Type } -> Method -> Type -> Type
 bodyOf m a = selectBodyByMethod m () $ Publisher monad error a
 
+public export
+HttpRequest : { auto monad : Type -> Type } -> { auto error : Type} -> Type -> Type -> Type -> Type
+HttpRequest p h a = Request Method p h (bodyOf { monad } { error }) a
+
 export
-mkRequest : { monad : Type -> Type } -> { error : Type } -> (m : Method) -> h -> bodyOf { monad } { error } m a -> Request Method h (bodyOf { monad } { error }) a
-mkRequest m h a = MkRequest m h a
+mkRequest : { monad : Type -> Type } -> { error : Type } -> (m : Method) -> p -> h -> bodyOf { monad } { error } m a -> HttpRequest { monad } { error } p h a
+mkRequest m p h a = MkRequest m p h a
 
 export
 mkRequestBody : { monad : Type -> Type } -> { error : Type } -> (m : Method) -> Lazy (Publisher monad error b) -> bodyOf {monad} {error} m b

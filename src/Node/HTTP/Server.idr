@@ -23,6 +23,10 @@ namespace Request
   (.method) : IncomingMessage -> String
 
   export
+  %foreign "node:lambda: req => req.path"
+  (.path) : IncomingMessage -> String
+
+  export
   %foreign "node:lambda: req => req.url"
   (.url) : IncomingMessage -> String
 
