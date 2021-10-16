@@ -1,10 +1,9 @@
 module Basic
 
 import TyTTP
-import TyTTP.HTTP
 import TyTTP.Combinators
 
-exampleBasic : Step Method String () TyTTP.Request.simpleBody () String String -> IO ()
+exampleBasic : Step () String () TyTTP.Request.simpleBody () () String String -> IO ()
 exampleBasic initialStep = do
   let handlers =
         [ hId
@@ -20,5 +19,5 @@ exampleBasic initialStep = do
 
 main : IO ()
 main = do
-  let step = MkStep (MkRequest GET "/" () "request") (MkResponse OK () "")
+  let step = MkStep (MkRequest () "/" () "request") (MkResponse () () "")
   exampleBasic step

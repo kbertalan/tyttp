@@ -1,17 +1,16 @@
 module Main
 
 import Node
+import Node.Error
 import Node.HTTP.Client
 import Node.HTTP.Server
-import TyTTP
 import TyTTP.Adapter.Node.HTTP as HTTP
 import TyTTP.Combinators
 import TyTTP.Combinators.HTTP
 import TyTTP.HTTP
-import Node.Error
 
-hReflect : Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) StringHeaders String ()
-  -> IO $ Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) StringHeaders String (Publisher IO NodeError String)
+hReflect : Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders String ()
+  -> IO $ Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders String (Publisher IO NodeError String)
 hReflect step = do
   let m = step.request.method
       h = step.request.headers
@@ -21,7 +20,7 @@ hReflect step = do
         s.onNext "headers ->"
         for_ h $ \v => s.onNext "\t\{fst v} : \{snd v}"
         s.onNext "body ->"
-        selectBodyByMethod m (s.onNext "empty") $
+        selectBodyByMethod m (s.onNext "empty" >>= s.onSucceded) $
           (believe_me step.request.body).subscribe s
   hConstResponse p step
   
@@ -30,6 +29,12 @@ main : IO ()
 main = do
   http <- require
   server <- HTTP.listen hReflect
+
+  defer $ do
+    ignore $ http.get "http://localhost:3000" $ \res => do
+      putStrLn "GET"
+      putStrLn res.statusCode
+      onData res putStrLn
 
   defer $ do
     clientReq <- http.post "http://localhost:3000/the/resource" $ \res => do

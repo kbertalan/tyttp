@@ -4,7 +4,6 @@ import Control.Monad.Error.Interface
 import Control.Monad.Error.Either
 import Data.String
 import TyTTP
-import TyTTP.HTTP
 import TyTTP.Combinators
 
 orThrow : MonadError e m => Maybe a -> e -> m a
@@ -17,7 +16,7 @@ data Error = ParseError String
 parseIntegerM : MonadError Error m => String -> m Int
 parseIntegerM s = parseInteger s `orThrow` ParseError ("Could not parse as int: " <+> s)
 
-exampleErrorHandling : Step Method String () TyTTP.Request.simpleBody () String String -> IO ()
+exampleErrorHandling : Step () String () TyTTP.Request.simpleBody () () String String -> IO ()
 exampleErrorHandling initialStep = do
   putStrLn $ "\nErrors: " <+> initialStep.request.body <+> "\n"
 
@@ -30,9 +29,9 @@ exampleErrorHandling initialStep = do
 
 main : IO ()
 main = do
-  let res = MkResponse OK () ""
-      step = MkStep (MkRequest GET "/" () "request") res
+  let res = MkResponse () () ""
+      step = MkStep (MkRequest () "/" () "request") res
 
   exampleErrorHandling step
-  exampleErrorHandling $ MkStep (MkRequest GET "/" () "134") res
+  exampleErrorHandling $ MkStep (MkRequest () "/" () "134") res
 

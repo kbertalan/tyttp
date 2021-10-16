@@ -14,7 +14,11 @@ public export
 RawHttpRequest : { auto monad : Type -> Type } -> { auto error : Type } -> Type
 RawHttpRequest = HttpRequest { monad } { error } String StringHeaders String
 
-toNodeResponse : Error e => Response StringHeaders (Publisher IO e String) -> Node.HTTP.Server.ServerResponse -> IO ()
+public export
+RawHttpResponse : { auto monad : Type -> Type } -> { auto error : Type } -> Type
+RawHttpResponse = Response Status StringHeaders $ Publisher monad error String
+
+toNodeResponse : Error e => RawHttpResponse { monad = IO } { error = e } -> Node.HTTP.Server.ServerResponse -> IO ()
 toNodeResponse res nodeRes = do
   let status = res.status.code
   headers <- mapHeaders res.headers
@@ -42,9 +46,8 @@ export
 listen : 
    {auto http : HTTP}
    -> { default 3000 port : Int }
-   -> Handler IO 
-     Method String StringHeaders (HTTP.bodyOf { monad = IO } {error = NodeError}) StringHeaders String ()
-     Method String StringHeaders f StringHeaders b (Publisher IO NodeError String)
+   -> ( Step Method String StringHeaders (HTTP.bodyOf { monad = IO } {error = NodeError}) Status StringHeaders String ()
+     -> IO $ Step Method String StringHeaders f Status StringHeaders b (Publisher IO NodeError String))
    -> IO Server
 listen {http} {port} handler = do
   server <- http.createServer
