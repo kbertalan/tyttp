@@ -1,49 +1,58 @@
 module Main
 
 import Data.Buffer
+import Data.List
+import Data.String
+import Control.Monad.Either
 import Node
 import Node.Error
 import Node.HTTP.Client
 import Node.HTTP.Server
-import TyTTP.Adapter.Node.HTTP as HTTP
-import TyTTP.Combinators
-import TyTTP.Combinators.HTTP
+import System.Directory
+import System.File
+import TyTTP
 import TyTTP.HTTP
+import TyTTP.Adapter.Node.HTTP
 
-hReflect : Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer ()
+hStatic : String 
+  -> Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer ()
   -> IO $ Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
-hReflect step = do
-  let m = step.request.method
-      h = step.request.headers
-      p = MkPublisher { m = IO } { e = NodeError } { a = Buffer } $ \s => do
-        s.onNext $ fromString "method -> \{show m}"
-        s.onNext $ fromString "path -> \{step.request.path}"
-        s.onNext "headers ->"
-        for_ h $ \v => s.onNext $ fromString "\t\{fst v} : \{snd v}"
-        s.onNext "body ->"
-        selectBodyByMethod m (s.onNext "empty" >>= s.onSucceded) $
-          (believe_me step.request.body).subscribe s
-  hConstResponse { m = IO } p step
+hStatic folder step = eitherT respondError respondSuccess $ do
+  let resource = pack $ delete '/' $ unpack step.request.path
+  Right buffer <- createBufferFromFile "\{folder}/\{resource}"
+    | Left e => throwError $ fromString $ show e
+  pure buffer
+
+  where
+    respondError : Buffer -> IO $ Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
+    respondError buffer = pure $ record { response.status = NOT_FOUND, response.body = MkPublisher $ \s => s.onNext buffer >>= s.onSucceded } step
+    respondSuccess : Buffer -> IO $ Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
+    respondSuccess buffer = pure $ record { response.status = OK, response.body = MkPublisher $ \s => s.onNext buffer >>= s.onSucceded } step
 
 main : IO ()
-main = do
-  http <- require
-  server <- HTTP.listen hReflect
+main = eitherT putStrLn pure $ do
+  Just cwd <- currentDir
+    | Nothing => throwError "No current directory"
 
-  defer $ do
-    ignore $ http.get "http://localhost:3000" $ \res => do
-      putStrLn "GET"
-      putStrLn res.statusCode
-      onData res putStrLn
+  let folder = "\{cwd}/tmp"
+  unless !(exists folder) $ do
+    Right () <- createDir folder
+      | Left _ => throwError "Cannot create directory \{folder}"
+    pure ()
 
-  defer $ do
-    clientReq <- http.post "http://localhost:3000/the/resource" $ \res => do
-      putStrLn "POST"
-      putStrLn res.statusCode
-      onData res putStrLn
-      server.close
+  let resource = "file.json"
+      file = "\{folder}/\{resource}"
+      content = trim """
+      { "some": "text", "or": -1 }
+    """
 
-    clientReq.write "Hello World!"
-    clientReq.write "With more chunks"
-    clientReq.end
+  Right _ <- writeFile file content
+    | Left e => throwError $ show e
+
+  http <- liftIO require
+  server <- liftIO $ HTTP.listen $ hStatic folder
+
+  ignore $ liftIO $ http.get "http://localhost:3000/\{resource}" $ \res => do
+    onData res putStrLn
+    server.close
 
