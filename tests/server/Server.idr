@@ -1,5 +1,6 @@
 module Server
 
+import Data.Buffer
 import Node
 import Node.HTTP.Client
 import Node.HTTP.Server
