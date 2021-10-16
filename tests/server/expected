@@ -1,5 +1,21 @@
 1/1: Building Server (./Server.idr)
+GET
+200
+method -> GET
+path -> /
+headers ->
+	host : localhost:3000
+	connection : close
+body ->
+empty
 POST
 200
+method -> POST
+path -> /the/resource
+headers ->
+	host : localhost:3000
+	connection : close
+	transfer-encoding : chunked
+body ->
 Hello World!
 With more chunks
