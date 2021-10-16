@@ -1,5 +1,7 @@
 module Node
 
+import Data.Buffer
+
 %foreign "node:lambda: (ty, a) => JSON.stringify(a, null, 2)"
 ffi_toJsonString : a -> String
 
@@ -21,3 +23,11 @@ ffi_defer : PrimIO () -> PrimIO ()
 export
 defer : IO () -> IO ()
 defer action = primIO $ ffi_defer $ toPrim action
+
+%foreign "node:lambda: s=>Buffer.from(s)"
+ffi_BufferFromString : String -> Buffer
+
+export
+FromString Buffer where
+  fromString = ffi_BufferFromString
+

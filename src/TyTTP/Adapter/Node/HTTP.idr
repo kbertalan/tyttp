@@ -1,5 +1,6 @@
 module TyTTP.Adapter.Node.HTTP
 
+import Data.Buffer
 import Node
 import Node.Error
 import Node.HTTP.Server
@@ -12,11 +13,11 @@ StringHeaders = List (String, String)
 
 public export
 RawHttpRequest : { auto monad : Type -> Type } -> { auto error : Type } -> Type
-RawHttpRequest = HttpRequest { monad } { error } String StringHeaders String
+RawHttpRequest = HttpRequest { monad } { error } String StringHeaders Buffer
 
 public export
 RawHttpResponse : { auto monad : Type -> Type } -> { auto error : Type } -> Type
-RawHttpResponse = Response Status StringHeaders $ Publisher monad error String
+RawHttpResponse = Response Status StringHeaders $ Publisher monad error Buffer
 
 toNodeResponse : Error e => RawHttpResponse { monad = IO } { error = e } -> Node.HTTP.Server.ServerResponse -> IO ()
 toNodeResponse res nodeRes = do
@@ -37,7 +38,7 @@ fromNodeRequest nodeReq =
   let method = parseMethod nodeReq.method
       path = nodeReq.url
       headers = nodeReq.headers.asList
-  in HTTP.mkRequest method path headers $ HTTP.mkRequestBody { b = String } method $ MkPublisher $ \s => do
+  in HTTP.mkRequest method path headers $ HTTP.mkRequestBody method $ MkPublisher $ \s => do
         nodeReq.onData s.onNext
         nodeReq.onError s.onFailed
         nodeReq.onEnd s.onSucceded
@@ -46,8 +47,8 @@ export
 listen : 
    {auto http : HTTP}
    -> { default 3000 port : Int }
-   -> ( Step Method String StringHeaders (HTTP.bodyOf { monad = IO } {error = NodeError}) Status StringHeaders String ()
-     -> IO $ Step Method String StringHeaders f Status StringHeaders b (Publisher IO NodeError String))
+   -> ( Step Method String StringHeaders (HTTP.bodyOf { monad = IO } {error = NodeError}) Status StringHeaders Buffer ()
+     -> IO $ Step Method String StringHeaders f Status StringHeaders b (Publisher IO NodeError Buffer))
    -> IO Server
 listen {http} {port} handler = do
   server <- http.createServer

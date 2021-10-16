@@ -1,5 +1,6 @@
 module Main
 
+import Data.Buffer
 import Node
 import Node.Error
 import Node.HTTP.Client
@@ -9,21 +10,20 @@ import TyTTP.Combinators
 import TyTTP.Combinators.HTTP
 import TyTTP.HTTP
 
-hReflect : Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders String ()
-  -> IO $ Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders String (Publisher IO NodeError String)
+hReflect : Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer ()
+  -> IO $ Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
 hReflect step = do
   let m = step.request.method
       h = step.request.headers
-      p = MkPublisher { m = IO } { e = NodeError } $ \s => do
-        s.onNext "method -> \{show m}"
-        s.onNext "path -> \{step.request.path}"
+      p = MkPublisher { m = IO } { e = NodeError } { a = Buffer } $ \s => do
+        s.onNext $ fromString "method -> \{show m}"
+        s.onNext $ fromString "path -> \{step.request.path}"
         s.onNext "headers ->"
-        for_ h $ \v => s.onNext "\t\{fst v} : \{snd v}"
+        for_ h $ \v => s.onNext $ fromString "\t\{fst v} : \{snd v}"
         s.onNext "body ->"
         selectBodyByMethod m (s.onNext "empty" >>= s.onSucceded) $
           (believe_me step.request.body).subscribe s
-  hConstResponse p step
-  
+  hConstResponse { m = IO } p step
 
 main : IO ()
 main = do
