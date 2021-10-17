@@ -6,6 +6,8 @@ import Data.String
 import Control.Monad.Either
 import Node
 import Node.Error
+import Node.FS
+import Node.FS.Stats
 import Node.HTTP.Client
 import Node.HTTP.Server
 import System.Directory
@@ -14,20 +16,50 @@ import TyTTP
 import TyTTP.HTTP
 import TyTTP.Adapter.Node.HTTP
 
-hStatic : String 
-  -> Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer ()
-  -> IO $ Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
-hStatic folder step = eitherT respondError respondSuccess $ do
-  let resource = pack $ delete '/' $ unpack step.request.path
-  Right buffer <- createBufferFromFile "\{folder}/\{resource}"
-    | Left e => throwError $ fromString $ show e
-  pure buffer
+Resource : Type
+Resource = String
+
+data FileServingError
+  = FileReadError FileError
+  | NotAFile Resource
+  | OnlyGet
+
+StaticRequest = Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer ()
+
+StaticResponse = Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
+
+hStatic : String -> StaticRequest -> IO StaticResponse
+hStatic folder step = eitherT returnError returnSuccess $ do
+    let resource = step.request.path
+        file = "\{folder}\{resource}"
+
+    GET <- pure $ step.request.method
+      | _ => throwError OnlyGet
+
+    fs <- liftIO FS.require
+    stats <- liftIO $ stat file
+    True <- pure $ stats.isFile
+      | False => throwError $ NotAFile resource
+
+    pure $ MkPublisher $ \s => s.onSucceded ()
 
   where
-    respondError : Buffer -> IO $ Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
-    respondError buffer = pure $ record { response.status = NOT_FOUND, response.body = MkPublisher $ \s => s.onNext buffer >>= s.onSucceded } step
-    respondSuccess : Buffer -> IO $ Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
-    respondSuccess buffer = pure $ record { response.status = OK, response.body = MkPublisher $ \s => s.onNext buffer >>= s.onSucceded } step
+    returnSuccess : Publisher IO NodeError Buffer -> IO StaticResponse
+    returnSuccess result = do
+      pure $ record { response.body = result } step
+
+    sendError : Status -> String -> IO StaticResponse
+    sendError status str = do
+      let buffer = fromString str
+          publisher : Publisher IO NodeError Buffer = MkPublisher $ \s => s.onNext buffer >>= s.onSucceded
+
+      pure $ record { response.status = status, response.body = publisher } step
+
+    returnError : FileServingError -> IO StaticResponse
+    returnError code = case code of
+      FileReadError e => sendError INTERNAL_SERVER_ERROR $ "File error: " <+> show e
+      NotAFile s => sendError NOT_FOUND $ "Could not found file: " <+> s
+      OnlyGet => sendError BAD_REQUEST $ "Only GET method is supported"
 
 main : IO ()
 main = eitherT putStrLn pure $ do
