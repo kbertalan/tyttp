@@ -35,6 +35,9 @@ test: test-build
 dev:
 	find src/ -name *.idr | entr make run
 
+dev-build:
+	find src/ -name *.idr | entr make build
+
 dev-test:
 	find tests/ -name *.idr | INTERACTIVE="" entr make test
 

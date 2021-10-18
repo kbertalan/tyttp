@@ -10,7 +10,7 @@ data Stats : Type where [external]
 ffi_stat : FS -> String -> PrimIO (Either NodeError Stats)
 
 export
-stat : {auto fs : FS} -> String -> IO (Either NodeError Stats)
+stat : HasIO io => {auto fs : FS} -> String -> io (Either NodeError Stats)
 stat path = primIO $ ffi_stat fs path
 
 %foreign "node:lambda: s=>s.isBlockDevice()"

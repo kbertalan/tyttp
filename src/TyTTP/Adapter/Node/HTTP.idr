@@ -44,12 +44,12 @@ fromNodeRequest nodeReq =
         nodeReq.onEnd s.onSucceded
 
 export
-listen : 
-   {auto http : HTTP}
+listen : HasIO io
+   => {auto http : HTTP}
    -> { default 3000 port : Int }
    -> ( Step Method String StringHeaders (HTTP.bodyOf { monad = IO } {error = NodeError}) Status StringHeaders Buffer ()
      -> IO $ Step Method String StringHeaders f Status StringHeaders b (Publisher IO NodeError Buffer))
-   -> IO Server
+   -> io Server
 listen {http} {port} handler = do
   server <- http.createServer
 

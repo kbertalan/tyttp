@@ -8,7 +8,7 @@ data ReadStream : Type where [external]
 ffi_createReadStream : FS -> String -> PrimIO ReadStream
 
 export
-createReadStream : { auto fs : FS } -> String -> IO ReadStream
+createReadStream : HasIO io => { auto fs : FS } -> String -> io ReadStream
 createReadStream path = primIO $ ffi_createReadStream fs path
 
 
@@ -16,20 +16,20 @@ createReadStream path = primIO $ ffi_createReadStream fs path
 ffi_onData : ReadStream -> (a -> PrimIO ()) -> PrimIO ()
 
 export
-(.onData) : ReadStream -> (a -> IO ()) -> IO ()
+(.onData) : HasIO io => ReadStream -> (a -> IO ()) -> io ()
 (.onData) req cb = primIO $ ffi_onData req $ \a => toPrim $ cb a
 
 %foreign "node:lambda: (req, end) => { req.on('end', () => end()()) }"
 ffi_onEnd : ReadStream -> (() -> PrimIO ()) -> PrimIO ()
 
 export
-(.onEnd) : ReadStream -> (() -> IO ()) -> IO ()
+(.onEnd) : HasIO io => ReadStream -> (() -> IO ()) -> io ()
 (.onEnd) req cb = primIO $ ffi_onEnd req $ \_ => toPrim $ cb ()
 
 %foreign "node:lambda: (ty, req, error) => { req.on('error', e => error(e)()) }"
 ffi_onError : ReadStream -> (e -> PrimIO ()) -> PrimIO ()
 
 export
-(.onError) : ReadStream -> (e -> IO ()) -> IO ()
+(.onError) : HasIO io => ReadStream -> (e -> IO ()) -> io ()
 (.onError) req cb = primIO $ ffi_onError req $ \e => toPrim $ cb e
 

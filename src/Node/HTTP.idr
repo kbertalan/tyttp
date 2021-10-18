@@ -7,7 +7,7 @@ data HTTP : Type where [external]
 ffi_require : () -> PrimIO HTTP
 
 export
-require : IO HTTP
+require : HasIO io => io HTTP
 require = primIO $ ffi_require ()
 
 namespace Headers
@@ -33,7 +33,7 @@ namespace Headers
   ffi_setHeader : Headers -> String -> String -> PrimIO Headers
 
   export
-  (.setHeader) : Headers -> String -> String -> IO Headers
+  (.setHeader) : HasIO io => Headers -> String -> String -> io Headers
   (.setHeader) headers name value = primIO $ ffi_setHeader headers name value
 
   %foreign "node:lambda: (headers) => __prim_js2idris_array(Object.entries(headers).map(([k,v]) => { return {h:0,a1:k,a2:v}}))"

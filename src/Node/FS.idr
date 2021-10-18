@@ -7,6 +7,6 @@ data FS : Type where [external]
 ffi_require : PrimIO FS
 
 export
-require : IO FS
+require : HasIO io => io FS
 require = primIO ffi_require
 

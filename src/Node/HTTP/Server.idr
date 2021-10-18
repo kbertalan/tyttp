@@ -30,21 +30,21 @@ namespace Request
   ffi_onData : IncomingMessage -> (a -> PrimIO ()) -> PrimIO ()
 
   export
-  (.onData) : IncomingMessage -> (a -> IO ()) -> IO ()
+  (.onData) : HasIO io => IncomingMessage -> (a -> IO ()) -> io ()
   (.onData) req cb = primIO $ ffi_onData req $ \a => toPrim $ cb a
 
   %foreign "node:lambda: (req, end) => { req.on('end', () => end()()) }"
   ffi_onEnd : IncomingMessage -> (() -> PrimIO ()) -> PrimIO ()
 
   export
-  (.onEnd) : IncomingMessage -> (() -> IO ()) -> IO ()
+  (.onEnd) : HasIO io => IncomingMessage -> (() -> IO ()) -> io ()
   (.onEnd) req cb = primIO $ ffi_onEnd req $ \_ => toPrim $ cb ()
 
   %foreign "node:lambda: (ty, req, error) => { req.on('error', e => error(e)()) }"
   ffi_onError : IncomingMessage -> (e -> PrimIO ()) -> PrimIO ()
 
   export
-  (.onError) : IncomingMessage -> (e -> IO ()) -> IO ()
+  (.onError) : HasIO io => IncomingMessage -> (e -> IO ()) -> io ()
   (.onError) req cb = primIO $ ffi_onError req $ \e => toPrim $ cb e
 
 namespace Response
@@ -53,21 +53,21 @@ namespace Response
   ffi_end : ServerResponse -> PrimIO ()
 
   export
-  (.end) : ServerResponse -> IO ()
+  (.end) : HasIO io => ServerResponse -> io ()
   (.end) res = primIO $ ffi_end res
 
   %foreign "node:lambda: (ty, res, data) => res.write(data)"
   ffi_write : { 0 a : _ } -> ServerResponse -> a -> PrimIO ()
 
   export
-  (.write) : ServerResponse -> a -> IO ()
+  (.write) : HasIO io => ServerResponse -> a -> io ()
   (.write) res a = primIO $ ffi_write res a
 
   %foreign "node:lambda: (res, status, headers) => res.writeHead(status, headers)"
   ffi_writeHead : ServerResponse -> Int -> Headers -> PrimIO ()
 
   export
-  (.writeHead) : ServerResponse -> Int -> Headers -> IO ()
+  (.writeHead) : HasIO io => ServerResponse -> Int -> Headers -> io ()
   (.writeHead) res status headers = primIO $ ffi_writeHead res status headers
 
 export
@@ -77,14 +77,14 @@ data Server : Type where [external]
 ffi_createServer : HTTP -> PrimIO Server
 
 export
-(.createServer) : HTTP -> IO Server
+(.createServer) : HasIO io => HTTP -> io Server
 (.createServer) http = primIO $ ffi_createServer http
 
 %foreign "node:lambda: (server, handler) => server.on('request', (req, res) => handler(req)(res)())"
 ffi_onRequest : Server -> (IncomingMessage -> ServerResponse -> PrimIO ()) -> PrimIO ()
 
 export
-(.onRequest) : Server -> (IncomingMessage -> ServerResponse -> IO()) -> IO ()
+(.onRequest) : HasIO io => Server -> (IncomingMessage -> ServerResponse -> IO()) -> io ()
 (.onRequest) server callback = 
   let primCallback = \req => \res => toPrim $ callback req res
   in primIO $ ffi_onRequest server primCallback
@@ -93,13 +93,13 @@ export
 ffi_listen : Server -> Int -> PrimIO ()
 
 export
-(.listen) : Server -> Int -> IO ()
+(.listen) : HasIO io => Server -> Int -> io ()
 (.listen) server port = primIO $ ffi_listen server port
 
 %foreign "node:lambda: server => server.close()"
 ffi_close : Server -> PrimIO ()
 
 export
-(.close) : Server -> IO ()
+(.close) : HasIO io => Server -> io ()
 (.close) server = primIO $ ffi_close server
 

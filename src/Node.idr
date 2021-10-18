@@ -21,7 +21,7 @@ debugJsValue a = primIO $ ffi_debugJsValue a
 ffi_defer : PrimIO () -> PrimIO ()
 
 export
-defer : IO () -> IO ()
+defer : HasIO io => IO () -> io ()
 defer action = primIO $ ffi_defer $ toPrim action
 
 %foreign "node:lambda: s=>Buffer.from(s)"

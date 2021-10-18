@@ -42,8 +42,8 @@ hStatic folder step = eitherT returnError returnSuccess $ do
     GET <- pure $ step.request.method
       | _ => throwError OnlyGet
 
-    fs <- liftIO FS.require
-    Right stats <- liftIO $ stat file
+    fs <- FS.require
+    Right stats <- stat file
       | Left e => throwError $ StatError e
 
     True <- pure $ stats.isFile
@@ -52,7 +52,7 @@ hStatic folder step = eitherT returnError returnSuccess $ do
     False <- pure $ stats.isDirectory
       | _ => throwError $ NotAFile resource
 
-    readStream <- liftIO $ createReadStream file
+    readStream <- createReadStream file
 
     pure $ MkStaticSuccessResult
             { size = stats.size }
@@ -86,6 +86,6 @@ main = eitherT putStrLn pure $ do
   Just cwd <- currentDir
     | Nothing => throwError "No current directory"
 
-  http <- liftIO HTTP.require
-  ignore $ liftIO $ HTTP.listen $ hStatic cwd
+  http <- HTTP.require
+  ignore $ HTTP.listen $ hStatic cwd
 
