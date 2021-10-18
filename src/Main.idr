@@ -44,7 +44,9 @@ hStatic folder step = eitherT returnError returnSuccess $ do
 
     fs <- FS.require
     Right stats <- stat file
-      | Left e => throwError $ StatError e
+      | Left e => throwError $ case e.code of
+         SystemError ENOENT => NotAFile resource
+         _ => StatError e
 
     True <- pure $ stats.isFile
       | _ => throwError $ NotAFile resource
@@ -73,7 +75,7 @@ hStatic folder step = eitherT returnError returnSuccess $ do
       let buffer = fromString str
           publisher : Publisher IO NodeError Buffer = MkPublisher $ \s => s.onNext buffer >>= s.onSucceded
 
-      pure $ record { response.status = status, response.body = publisher } step
+      pure $ record { response.headers = [("Content-Type", "text/plain")], response.status = status, response.body = publisher } step
 
     returnError : FileServingError -> IO StaticResponse
     returnError code = case code of

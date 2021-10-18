@@ -1,6 +1,24 @@
 module Node.Error
 
 public export
+data SystemErrorCode
+  = EACCES
+  | EADDRINUSE
+  | ECONNREFUSED
+  | ECONNRESET
+  | EEXIST
+  | EISDIR
+  | EMFILE
+  | ENOENT
+  | ENOTDIR
+  | ENOTEMPTY
+  | ENOTFOUND
+  | EPERM
+  | EPIPE
+  | ETIMEDOUT
+  | OtherSystemErrorCode String
+
+public export
 data Code
   = ABORT_ERR
   | ERR_AMBIGUOUS_ARGUMENT
@@ -271,6 +289,7 @@ data Code
   | HPE_HEADER_OVERFLOW
   | HPE_UNEXPECTED_CONTENT_LENGTH
   | MODULE_NOT_FOUND
+  | SystemError SystemErrorCode
   | OtherCode String
 
 fromString : String -> Code
@@ -544,6 +563,20 @@ fromString str = case str of
     "HPE_HEADER_OVERFLOW" => HPE_HEADER_OVERFLOW
     "HPE_UNEXPECTED_CONTENT_LENGTH" => HPE_UNEXPECTED_CONTENT_LENGTH
     "MODULE_NOT_FOUND" => MODULE_NOT_FOUND
+    "EACCES" => SystemError EACCES
+    "EADDRINUSE" => SystemError EADDRINUSE
+    "ECONNREFUSED" => SystemError ECONNREFUSED
+    "ECONNRESET" => SystemError ECONNRESET
+    "EEXIST" => SystemError EEXIST
+    "EISDIR" => SystemError EISDIR
+    "EMFILE" => SystemError EMFILE
+    "ENOENT" => SystemError ENOENT
+    "ENOTDIR" => SystemError ENOTDIR
+    "ENOTEMPTY" => SystemError ENOTEMPTY
+    "ENOTFOUND" => SystemError ENOTFOUND
+    "EPERM" => SystemError EPERM
+    "EPIPE" => SystemError EPIPE
+    "ETIMEDOUT" => SystemError ETIMEDOUT
     a => OtherCode a
 
 public export
