@@ -8,6 +8,7 @@ import Node
 import Node.Error
 import Node.FS
 import Node.FS.Stats
+import Node.FS.Stream
 import Node.HTTP.Client
 import Node.HTTP.Server
 import System.Directory
@@ -20,13 +21,18 @@ Resource : Type
 Resource = String
 
 data FileServingError
-  = FileReadError FileError
+  = StatError NodeError
   | NotAFile Resource
   | OnlyGet
 
 StaticRequest = Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer ()
 
 StaticResponse = Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
+
+record StaticSuccesResult where
+  constructor MkStaticSuccessResult
+  size : Int
+  stream : Publisher IO NodeError Buffer
 
 hStatic : String -> StaticRequest -> IO StaticResponse
 hStatic folder step = eitherT returnError returnSuccess $ do
@@ -37,16 +43,30 @@ hStatic folder step = eitherT returnError returnSuccess $ do
       | _ => throwError OnlyGet
 
     fs <- liftIO FS.require
-    stats <- liftIO $ stat file
-    True <- pure $ stats.isFile
-      | False => throwError $ NotAFile resource
+    Right stats <- liftIO $ stat file
+      | Left e => throwError $ StatError e
 
-    pure $ MkPublisher $ \s => s.onSucceded ()
+    True <- pure $ stats.isFile
+      | _ => throwError $ NotAFile resource
+
+    False <- pure $ stats.isDirectory
+      | _ => throwError $ NotAFile resource
+
+    readStream <- liftIO $ createReadStream file
+
+    pure $ MkStaticSuccessResult
+            { size = stats.size }
+            { stream = MkPublisher $ \s => do
+                readStream.onData  s.onNext
+                readStream.onEnd   s.onSucceded
+                readStream.onError s.onFailed
+            }
 
   where
-    returnSuccess : Publisher IO NodeError Buffer -> IO StaticResponse
+    returnSuccess : StaticSuccesResult -> IO StaticResponse
     returnSuccess result = do
-      pure $ record { response.body = result } step
+      let hs = ("Content-Length", show $ result.size) :: headers step.response 
+      pure $ record { response.status = OK, response.headers = hs, response.body = result.stream } step
 
     sendError : Status -> String -> IO StaticResponse
     sendError status str = do
@@ -57,7 +77,7 @@ hStatic folder step = eitherT returnError returnSuccess $ do
 
     returnError : FileServingError -> IO StaticResponse
     returnError code = case code of
-      FileReadError e => sendError INTERNAL_SERVER_ERROR $ "File error: " <+> show e
+      StatError e => sendError INTERNAL_SERVER_ERROR $ "File error: " <+> e.message
       NotAFile s => sendError NOT_FOUND $ "Could not found file: " <+> s
       OnlyGet => sendError BAD_REQUEST $ "Only GET method is supported"
 
@@ -66,25 +86,6 @@ main = eitherT putStrLn pure $ do
   Just cwd <- currentDir
     | Nothing => throwError "No current directory"
 
-  let folder = "\{cwd}/tmp"
-  unless !(exists folder) $ do
-    Right () <- createDir folder
-      | Left _ => throwError "Cannot create directory \{folder}"
-    pure ()
-
-  let resource = "file.json"
-      file = "\{folder}/\{resource}"
-      content = trim """
-      { "some": "text", "or": -1 }
-    """
-
-  Right _ <- writeFile file content
-    | Left e => throwError $ show e
-
-  http <- liftIO require
-  server <- liftIO $ HTTP.listen $ hStatic folder
-
-  ignore $ liftIO $ http.get "http://localhost:3000/\{resource}" $ \res => do
-    onData res putStrLn
-    server.close
+  http <- liftIO HTTP.require
+  ignore $ liftIO $ HTTP.listen $ hStatic cwd
 

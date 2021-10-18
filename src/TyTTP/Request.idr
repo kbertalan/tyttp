@@ -8,7 +8,7 @@ public export
 record Request m p h (f : m -> Type -> Type) a where
   constructor MkRequest
   method : m
-  path: p
+  path : p
   headers : h
   body : f method a
 

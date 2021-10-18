@@ -6,7 +6,7 @@ codegen=node
 .PHONY: build dist clean repl
 
 build:
-	$(idris2) --build $(package) --codegen $(codegen)
+	bash -c 'time $(idris2) --build $(package) --codegen $(codegen)'
 
 dist: build
 	npx rollup --config rollup.config.js
