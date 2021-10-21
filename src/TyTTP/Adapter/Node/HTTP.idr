@@ -31,7 +31,9 @@ toNodeResponse res nodeRes = do
         { onSucceded = \_ => nodeRes.end }
   where
     mapHeaders : StringHeaders -> IO Node.HTTP.Headers.Headers
-    mapHeaders h = foldlM (\hs, (k,v) => hs.setHeader k v) empty h
+    mapHeaders h = do
+      newHeaders <- empty
+      foldlM (\hs, (k,v) => hs.setHeader k v) newHeaders h
 
 fromNodeRequest : Node.HTTP.Server.IncomingMessage -> RawHttpRequest { monad = IO } { error = NodeError }
 fromNodeRequest nodeReq =

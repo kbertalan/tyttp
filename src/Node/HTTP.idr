@@ -16,11 +16,11 @@ namespace Headers
   data Headers : Type where [external]
 
   %foreign "node:lambda: () => { return {}; }"
-  ffi_empty : () -> Headers
+  ffi_empty : () -> PrimIO Headers
 
   export
-  empty : Headers
-  empty = ffi_empty ()
+  empty : HasIO io => io Headers
+  empty = primIO $ ffi_empty ()
 
   %foreign "node:lambda: (name, value) => { const headers = {}; headers[name] = value; return headers; }"
   ffi_singleton : String -> String -> Headers
