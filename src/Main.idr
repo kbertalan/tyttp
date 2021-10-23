@@ -4,6 +4,8 @@ import Data.Buffer
 import Data.List
 import Data.String
 import Control.Monad.Either
+import Control.Monad.Maybe
+import Control.Monad.Trans
 import Node
 import Node.Error
 import Node.FS
@@ -23,7 +25,6 @@ Resource = String
 data FileServingError
   = StatError NodeError
   | NotAFile Resource
-  | OnlyGet
 
 StaticRequest = Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer ()
 
@@ -34,13 +35,17 @@ record StaticSuccesResult where
   size : Int
   stream : Publisher IO NodeError Buffer
 
+sendError : Status -> String -> StaticRequest -> IO StaticResponse
+sendError status str step = do
+  let buffer = fromString str
+      publisher : Publisher IO NodeError Buffer = MkPublisher $ \s => s.onNext buffer >>= s.onSucceded
+
+  pure $ record { response.headers = [("Content-Type", "text/plain")], response.status = status, response.body = publisher } step
+
 hStatic : String -> StaticRequest -> IO StaticResponse
 hStatic folder step = eitherT returnError returnSuccess $ do
     let resource = step.request.path
         file = "\{folder}\{resource}"
-
-    GET <- pure $ step.request.method
-      | _ => throwError OnlyGet
 
     fs <- FS.require
     Right stats <- stat file
@@ -70,18 +75,49 @@ hStatic folder step = eitherT returnError returnSuccess $ do
       let hs = ("Content-Length", show $ result.size) :: headers step.response 
       pure $ record { response.status = OK, response.headers = hs, response.body = result.stream } step
 
-    sendError : Status -> String -> IO StaticResponse
-    sendError status str = do
-      let buffer = fromString str
-          publisher : Publisher IO NodeError Buffer = MkPublisher $ \s => s.onNext buffer >>= s.onSucceded
-
-      pure $ record { response.headers = [("Content-Type", "text/plain")], response.status = status, response.body = publisher } step
-
     returnError : FileServingError -> IO StaticResponse
     returnError code = case code of
-      StatError e => sendError INTERNAL_SERVER_ERROR $ "File error: " <+> e.message
-      NotAFile s => sendError NOT_FOUND $ "Could not found file: " <+> s
-      OnlyGet => sendError BAD_REQUEST $ "Only GET method is supported"
+      StatError e => sendError INTERNAL_SERVER_ERROR ("File error: " <+> e.message) step
+      NotAFile s => sendError NOT_FOUND ("Could not found file: " <+> s) step
+
+hStatic2 : String -> StaticRequest -> IO StaticResponse
+hStatic2 folder step = do
+    let error = sendError BAD_REQUEST "Invalid method" step
+    fromMaybeT error $ routes
+      [ get $ \s => lift $ hStatic folder s
+      , post $ \s => lift $ sendError INTERNAL_SERVER_ERROR "Should not run this" s
+      ] step
+  where
+    routes : Alternative m
+      => List (
+        Step me p h1 fn s h2 a b
+        -> m $ Step me' p' h1' fn' s' h2' a' b'
+      )
+      -> Step me p h1 fn s h2 a b
+      -> m $ Step me' p' h1' fn' s' h2' a' b'
+    routes handlers step = choiceMap ($ step) handlers
+
+    get : Alternative m
+      => (
+        Step Method p h1 fn s h2 a b
+        -> m $ Step me' p' h1' fn' s' h2' a' b'
+      )
+      -> Step Method p h1 fn s h2 a b
+      -> m $ Step me' p' h1' fn' s' h2' a' b'
+    get handler step = case step.request.method of
+      GET => handler step
+      _ => empty
+
+    post : Alternative m
+      => (
+        Step Method p h1 fn s h2 a b
+        -> m $ Step me' p' h1' fn' s' h2' a' b'
+      )
+      -> Step Method p h1 fn s h2 a b
+      -> m $ Step me' p' h1' fn' s' h2' a' b'
+    post handler step = case step.request.method of
+      POST => handler step
+      _ => empty
 
 main : IO ()
 main = eitherT putStrLn pure $ do
@@ -89,5 +125,5 @@ main = eitherT putStrLn pure $ do
     | Nothing => throwError "No current directory"
 
   http <- HTTP.require
-  ignore $ HTTP.listen $ hStatic cwd
+  ignore $ HTTP.listen $ hStatic2 cwd
 
