@@ -1,8 +1,6 @@
 module Main
 
 import Data.Buffer
-import Data.List
-import Data.String
 import Control.Monad.Either
 import Control.Monad.Maybe
 import Control.Monad.Trans
@@ -11,13 +9,13 @@ import Node.Error
 import Node.FS
 import Node.FS.Stats
 import Node.FS.Stream
-import Node.HTTP.Client
 import Node.HTTP.Server
 import System.Directory
-import System.File
 import TyTTP
-import TyTTP.HTTP
 import TyTTP.Adapter.Node.HTTP
+import TyTTP.HTTP
+import TyTTP.HTTP.Routing as R
+import TyTTP.Routing as R
 
 Resource : Type
 Resource = String
@@ -82,42 +80,11 @@ hStatic folder step = eitherT returnError returnSuccess $ do
 
 hStatic2 : String -> StaticRequest -> IO StaticResponse
 hStatic2 folder step = do
-    let error = sendError BAD_REQUEST "Invalid method" step
-    fromMaybeT error $ routes
-      [ get $ \s => lift $ hStatic folder s
-      , post $ \s => lift $ sendError INTERNAL_SERVER_ERROR "Should not run this" s
+    let error = delay $ sendError BAD_REQUEST "Invalid method" step
+    R.routesWithDefault error
+      [ R.get $ \s => lift $ hStatic folder s
+      , R.post $ \s => lift $ sendError INTERNAL_SERVER_ERROR "Should not run this" s
       ] step
-  where
-    routes : Alternative m
-      => List (
-        Step me p h1 fn s h2 a b
-        -> m $ Step me' p' h1' fn' s' h2' a' b'
-      )
-      -> Step me p h1 fn s h2 a b
-      -> m $ Step me' p' h1' fn' s' h2' a' b'
-    routes handlers step = choiceMap ($ step) handlers
-
-    get : Alternative m
-      => (
-        Step Method p h1 fn s h2 a b
-        -> m $ Step me' p' h1' fn' s' h2' a' b'
-      )
-      -> Step Method p h1 fn s h2 a b
-      -> m $ Step me' p' h1' fn' s' h2' a' b'
-    get handler step = case step.request.method of
-      GET => handler step
-      _ => empty
-
-    post : Alternative m
-      => (
-        Step Method p h1 fn s h2 a b
-        -> m $ Step me' p' h1' fn' s' h2' a' b'
-      )
-      -> Step Method p h1 fn s h2 a b
-      -> m $ Step me' p' h1' fn' s' h2' a' b'
-    post handler step = case step.request.method of
-      POST => handler step
-      _ => empty
 
 main : IO ()
 main = eitherT putStrLn pure $ do
