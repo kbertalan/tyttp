@@ -22,3 +22,21 @@ export
 Functor (Publisher m e) where
   map f publisher = MkPublisher $ \s => publisher.subscribe $ contramap f s
 
+export
+empty : Publisher m e a
+empty = MkPublisher $ \s => s.onSucceded ()
+
+export
+fail : e -> Publisher m e a
+fail e = MkPublisher $ \s => s.onFailed e
+
+export
+singleton : Monad m => a -> Publisher m e a
+singleton a = MkPublisher $ \s => s.onNext a >>= s.onSucceded
+
+export
+fromList : Monad m => List a -> Publisher m e a
+fromList list = MkPublisher $ \s => do
+  traverse_ s.onNext list
+  s.onSucceded ()
+

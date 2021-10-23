@@ -37,7 +37,8 @@ record StaticSuccesResult where
 sendError : Status -> String -> StaticRequest -> IO StaticResponse
 sendError status str step = do
   let buffer = fromString str
-      publisher : Publisher IO NodeError Buffer = MkPublisher $ \s => s.onNext buffer >>= s.onSucceded
+      publisher : Publisher IO NodeError Buffer = singleton buffer
+
   size <- rawSize buffer
 
   pure $ record 
