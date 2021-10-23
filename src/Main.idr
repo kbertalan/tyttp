@@ -5,6 +5,7 @@ import Control.Monad.Either
 import Control.Monad.Maybe
 import Control.Monad.Trans
 import Node
+import Node.Buffer
 import Node.Error
 import Node.FS
 import Node.FS.Stats
@@ -37,8 +38,16 @@ sendError : Status -> String -> StaticRequest -> IO StaticResponse
 sendError status str step = do
   let buffer = fromString str
       publisher : Publisher IO NodeError Buffer = MkPublisher $ \s => s.onNext buffer >>= s.onSucceded
+  size <- rawSize buffer
 
-  pure $ record { response.headers = [("Content-Type", "text/plain")], response.status = status, response.body = publisher } step
+  pure $ record 
+    { response.headers = 
+      [ ("Content-Type", "text/plain")
+      , ("Content-Length", show size)
+      ]
+    , response.status = status
+    , response.body = publisher
+    } step
 
 hStatic : String -> StaticRequest -> IO StaticResponse
 hStatic folder step = eitherT returnError returnSuccess $ do
