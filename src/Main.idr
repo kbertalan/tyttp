@@ -52,7 +52,7 @@ sendError status str step = do
 
 hStatic : String -> StaticRequest -> IO StaticResponse
 hStatic folder step = eitherT returnError returnSuccess $ do
-    let resource = step.request.path
+    let resource = step.request.url
         file = "\{folder}\{resource}"
 
     fs <- FS.require
