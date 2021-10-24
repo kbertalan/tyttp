@@ -18,7 +18,7 @@ repl:
 	rlwrap $(idris2) --repl $(package)
 
 run: build
-	bash -c 'time node build/exec/$(executable)'
+	bash -c 'time node build/exec/$(executable) src/'
 
 install:
 	$(idris2) --install $(package) --codegen $(codegen)

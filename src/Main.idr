@@ -1,6 +1,7 @@
 module Main
 
 import Data.Buffer
+import Data.List
 import Control.Monad.Either
 import Control.Monad.Maybe
 import Control.Monad.Trans
@@ -11,6 +12,7 @@ import Node.FS
 import Node.FS.Stats
 import Node.FS.Stream
 import Node.HTTP.Server
+import System
 import System.Directory
 import TyTTP
 import TyTTP.Adapter.Node.HTTP
@@ -98,9 +100,11 @@ hStatic2 folder step = do
 
 main : IO ()
 main = eitherT putStrLn pure $ do
-  Just cwd <- currentDir
-    | Nothing => throwError "No current directory"
+  Just folder <- ((head' <=< tail' <=< tail') <$> getArgs) <|> currentDir
+    | Nothing => throwError "Folder could not be located"
+
+  putStrLn "Starting static server in folder: \{folder}"
 
   http <- HTTP.require
-  ignore $ HTTP.listen $ hStatic2 cwd
+  ignore $ HTTP.listen $ hStatic2 folder
 
