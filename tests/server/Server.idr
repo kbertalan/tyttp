@@ -2,6 +2,7 @@ module Server
 
 import Data.Buffer
 import Node
+import Node.Buffer
 import Node.Error
 import Node.HTTP.Client
 import Node.HTTP.Server
@@ -17,7 +18,7 @@ hReflect step = do
       h = step.request.headers
       p = MkPublisher { m = IO } { e = NodeError } { a = Buffer } $ \s => do
         s.onNext $ fromString "method -> \{show m}"
-        s.onNext $ fromString "path -> \{step.request.path}"
+        s.onNext $ fromString "url -> \{step.request.url}"
         s.onNext "headers ->"
         for_ h $ \v => s.onNext $ fromString "\t\{fst v} : \{snd v}"
         s.onNext "body ->"

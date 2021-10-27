@@ -2,7 +2,7 @@
 GET
 200
 method -> GET
-path -> /
+url -> /
 headers ->
 	host : localhost:3000
 	connection : close
@@ -11,7 +11,7 @@ empty
 POST
 200
 method -> POST
-path -> /the/resource
+url -> /the/resource
 headers ->
 	host : localhost:3000
 	connection : close

@@ -11,7 +11,9 @@ modules = TyTTP
 	, TyTTP.Routing
 	, TyTTP.Step
 	, TyTTP.Stream
+	, TyTTP.URL
 	, Node
+	, Node.Buffer
 	, Node.Error
 	, Node.FS
 	, Node.FS.Stats
