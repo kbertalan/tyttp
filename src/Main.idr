@@ -18,6 +18,7 @@ import TyTTP
 import TyTTP.Adapter.Node.HTTP
 import TyTTP.HTTP
 import TyTTP.HTTP.Routing as R
+import TyTTP.Path
 import TyTTP.Routing as R
 
 Resource : Type
@@ -27,16 +28,18 @@ data FileServingError
   = StatError NodeError
   | NotAFile Resource
 
-StaticRequest = Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer ()
+StaticRequest : Type -> Type
+StaticRequest url = Step Method url StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer ()
 
-StaticResponse = Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
+StaticResponse : Type -> Type
+StaticResponse url = Step Method url StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
 
 record StaticSuccesResult where
   constructor MkStaticSuccessResult
   size : Int
   stream : Publisher IO NodeError Buffer
 
-sendError : Status -> String -> StaticRequest -> IO StaticResponse
+sendError : Status -> String -> StaticRequest a -> IO $ StaticResponse a
 sendError status str step = do
   let buffer = fromString str
       publisher : Publisher IO NodeError Buffer = singleton buffer
@@ -52,9 +55,9 @@ sendError status str step = do
     , response.body = publisher
     } step
 
-hStatic : String -> StaticRequest -> IO StaticResponse
+hStatic : String -> StaticRequest Path -> IO $ StaticResponse Path
 hStatic folder step = eitherT returnError returnSuccess $ do
-    let resource = step.request.url
+    let resource = step.request.url.rest
         file = "\{folder}\{resource}"
 
     fs <- FS.require
@@ -80,22 +83,22 @@ hStatic folder step = eitherT returnError returnSuccess $ do
             }
 
   where
-    returnSuccess : StaticSuccesResult -> IO StaticResponse
+    returnSuccess : StaticSuccesResult -> IO $ StaticResponse Path
     returnSuccess result = do
       let hs = ("Content-Length", show $ result.size) :: headers step.response 
       pure $ record { response.status = OK, response.headers = hs, response.body = result.stream } step
 
-    returnError : FileServingError -> IO StaticResponse
+    returnError : FileServingError -> IO $ StaticResponse Path
     returnError code = case code of
       StatError e => sendError INTERNAL_SERVER_ERROR ("File error: " <+> e.message) step
       NotAFile s => sendError NOT_FOUND ("Could not found file: " <+> s) step
 
-hStatic2 : String -> StaticRequest -> IO StaticResponse
+hStatic2 : String -> StaticRequest String -> IO $ StaticResponse String
 hStatic2 folder step = do
     let error = delay $ sendError BAD_REQUEST "Invalid method" step
     R.routesWithDefault error
-      [ R.get $ \s => lift $ hStatic folder s
-      , R.post $ \s => lift $ sendError INTERNAL_SERVER_ERROR "Should not run this" s
+      [ R.get $ pattern "/*" :> hStatic folder
+      , R.post :> sendError INTERNAL_SERVER_ERROR "Should not run this"
       ] step
 
 main : IO ()
