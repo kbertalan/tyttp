@@ -113,12 +113,11 @@ matcher s (MkParsedPattern ls) = go ls (unpack s) $ MkPath s [] ""
     go (Rest :: Nil) xs p = Just $ { rest := pack xs } p
     go _ _ _ = Nothing
 
-
 export
 pattern : Monad m 
   => Alternative m 
   => (str : String)
-  -> {default (parse str) parsed : Either ParseError $ ParsedPattern str}
+  -> {default (Path.parse str) parsed : _}
   -> {auto 0 ok : IsRight parsed }
   -> (
     Step me (URL auth Path s) h1 fn st h2 a b
@@ -126,12 +125,9 @@ pattern : Monad m
   )
   -> Step me (URL auth String s) h1 fn st h2 a b
   -> m $ Step me' (URL auth String s) h1' fn' st' h2' a' b'
-pattern str handler step =
-  let Right parsedPattern = parsed
-  in
+pattern str {parsed = (Right parsedPattern)} handler step =
   case matcher step.request.url.path parsedPattern of
      Just p => do
        result <- handler $ { request.url := { path := p } step.request.url } step
        pure $ { request.url := { path := step.request.url.path } result.request.url } result
      Nothing => empty
-
