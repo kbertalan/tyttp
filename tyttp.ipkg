@@ -6,12 +6,14 @@ modules = TyTTP
 	, TyTTP.Combinators.HTTP
 	, TyTTP.HTTP
 	, TyTTP.HTTP.Routing
+	, TyTTP.Path
 	, TyTTP.Request
 	, TyTTP.Response
 	, TyTTP.Routing
 	, TyTTP.Step
 	, TyTTP.Stream
 	, TyTTP.URL
+	, Data.Either.Ext
 	, Node
 	, Node.Buffer
 	, Node.Error
