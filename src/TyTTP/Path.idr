@@ -4,13 +4,14 @@ import Data.List
 import Data.String
 import public Data.Either.Ext
 import TyTTP
+import TyTTP.URL
 
-data Pattern : Type where
-  Literal : List Char -> Pattern
-  Param : List Char -> Pattern
-  Rest : Pattern
+data Elem : Type where
+  Literal : List Char -> Elem
+  Param : List Char -> Elem
+  Rest : Elem
 
-Eq Pattern where
+Eq Elem where
   (==) (Literal s1) (Literal s2) = s1 == s2
   (==) (Param s1) (Param s2) = s1 == s2
   (==) Rest Rest = True
@@ -24,18 +25,18 @@ data ParseState
 public export
 data ParseError
   = EmptyPattern
-  | ParamShouldFollowALiteral String (List Pattern)
-  | RestShouldFollowALiteral String (List Pattern)
-  | ParamAlreadyDefined String (List Pattern)
-  | ParamEmpty String (List Pattern)
-  | UnclosedParam String (List Pattern)
-  | InvalidStartCharInParam Char (List Pattern)
-  | InvalidCharInParam Char (List Pattern)
-  | RestShouldBeLast String (List Pattern)
+  | ParamShouldFollowALiteral String (List Elem)
+  | RestShouldFollowALiteral String (List Elem)
+  | ParamAlreadyDefined String (List Elem)
+  | ParamEmpty String (List Elem)
+  | UnclosedParam String (List Elem)
+  | InvalidStartCharInParam Char (List Elem)
+  | InvalidCharInParam Char (List Elem)
+  | RestShouldBeLast String (List Elem)
 
 export
 data ParsedPattern : (0 s : String) -> Type where
-  MkParsedPattern : List Pattern -> ParsedPattern s
+  MkParsedPattern : List Elem -> ParsedPattern s
 
 public export
 parse : (s : String) -> Either ParseError (ParsedPattern s)
@@ -45,7 +46,7 @@ parse s = map (MkParsedPattern . reverse) $ go (InLiteral []) [] $ unpack s
     isAllowedInParam : Char -> Bool
     isAllowedInParam c = isAlpha c || c == '-' || c == '_'
 
-    go : ParseState -> List Pattern -> List Char -> Either ParseError $ List Pattern
+    go : ParseState -> List Elem -> List Char -> Either ParseError $ List Elem
     go (InLiteral []) p r@('{' :: xs) = Left $ ParamShouldFollowALiteral (pack r) $ reverse p
     go (InLiteral s) p ('{' :: xs) = go (InParam []) (Literal (reverse s) :: p) xs
     go (InLiteral []) p r@('*' :: xs) = Left $ RestShouldFollowALiteral (pack r) $ reverse p
@@ -94,7 +95,7 @@ matcher s (MkParsedPattern ls) = go ls (unpack s) $ MkPath s [] ""
         True => consumeLiteral ls xs
         False => Nothing
 
-    go : List Pattern -> List Char -> Path -> Maybe Path
+    go : List Elem -> List Char -> Path -> Maybe Path
     go [] [] p = Just p
     go [] xs _ = Nothing
     go (Literal l :: ps) xs p = do
@@ -120,17 +121,17 @@ pattern : Monad m
   -> {default (parse str) parsed : Either ParseError $ ParsedPattern str}
   -> {auto 0 ok : IsRight parsed }
   -> (
-    Step me Path h1 fn st h2 a b
-    -> m $ Step me' Path h1' fn' st' h2' a' b'
+    Step me (URL auth Path s) h1 fn st h2 a b
+    -> m $ Step me' (URL auth Path s) h1' fn' st' h2' a' b'
   )
-  -> Step me String h1 fn st h2 a b
-  -> m $ Step me' String h1' fn' st' h2' a' b'
+  -> Step me (URL auth String s) h1 fn st h2 a b
+  -> m $ Step me' (URL auth String s) h1' fn' st' h2' a' b'
 pattern str handler step =
-  let Right p = parsed
+  let Right parsedPattern = parsed
   in
-  case matcher step.request.url p of
-     Just path => do
-       result <- handler $ { request.url := path } step
-       pure $ { request.url := step.request.url } result
+  case matcher step.request.url.path parsedPattern of
+     Just p => do
+       result <- handler $ { request.url := { path := p } step.request.url } step
+       pure $ { request.url := { path := step.request.url.path } result.request.url } result
      Nothing => empty
 

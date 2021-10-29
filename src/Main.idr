@@ -20,6 +20,7 @@ import TyTTP.HTTP
 import TyTTP.HTTP.Routing as R
 import TyTTP.Path
 import TyTTP.Routing as R
+import TyTTP.URL
 
 Resource : Type
 Resource = String
@@ -55,9 +56,9 @@ sendError status str step = do
     , response.body = publisher
     } step
 
-hStatic : String -> StaticRequest Path -> IO $ StaticResponse Path
+hStatic : String -> StaticRequest (URL a Path s) -> IO $ StaticResponse (URL a Path s)
 hStatic folder step = eitherT returnError returnSuccess $ do
-    let resource = step.request.url.rest
+    let resource = step.request.url.path.rest
         file = "\{folder}\{resource}"
 
     fs <- FS.require
@@ -83,23 +84,25 @@ hStatic folder step = eitherT returnError returnSuccess $ do
             }
 
   where
-    returnSuccess : StaticSuccesResult -> IO $ StaticResponse Path
+    returnSuccess : StaticSuccesResult -> IO $ StaticResponse (URL a Path s)
     returnSuccess result = do
       let hs = ("Content-Length", show $ result.size) :: headers step.response 
       pure $ record { response.status = OK, response.headers = hs, response.body = result.stream } step
 
-    returnError : FileServingError -> IO $ StaticResponse Path
+    returnError : FileServingError -> IO $ StaticResponse (URL a Path s)
     returnError code = case code of
       StatError e => sendError INTERNAL_SERVER_ERROR ("File error: " <+> e.message) step
       NotAFile s => sendError NOT_FOUND ("Could not found file: " <+> s) step
 
 hRouting : String -> StaticRequest String -> IO $ StaticResponse String
-hRouting folder step = do
-    let error = delay $ sendError NOT_FOUND "Resource could not be found" step
-    R.routesWithDefault error
-      [ R.get $ pattern "/static/*" :> hStatic folder
-      , R.post :> sendError INTERNAL_SERVER_ERROR "This is just an example"
-      ] step
+hRouting folder =
+    let routingError = sendError NOT_FOUND "Resource could not be found"
+        urlError = \err => sendError BAD_REQUEST "URL has invalid format"
+    in
+      Simple.urlWithHandler urlError :> R.routesWithDefault routingError
+          [ R.get $ pattern "/static/*" :> hStatic folder
+          , R.post :> sendError INTERNAL_SERVER_ERROR "This is just an example"
+          ]
 
 main : IO ()
 main = eitherT putStrLn pure $ do
