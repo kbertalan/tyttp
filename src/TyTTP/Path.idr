@@ -5,10 +5,9 @@ import Data.String
 import public Data.Maybe
 import TyTTP
 
-public export
 data Pattern : Type where
-  Literal : String -> Pattern
-  Param : String -> Pattern
+  Literal : List Char -> Pattern
+  Param : List Char -> Pattern
   Rest : Pattern
 
 Eq Pattern where
@@ -30,29 +29,30 @@ public export
 parse : (s : String) -> Maybe (ParsedPattern s)
 parse s = map (MkParsedPattern . reverse) $ go (InLiteral []) [] $ unpack s
   where
-    collect : List Char -> String
-    collect = pack . reverse
-
-    allowed : List Char
-    allowed = map chr $ [ord '-', ord '_'] ++ [ x | x <- [ord 'a' .. ord 'z']] ++ [ x | x <- [ord 'A' .. ord 'Z']] 
+    isAllowedInParam : Char -> Bool
+    isAllowedInParam c = isAlpha c || c == '-' || c == '_'
 
     go : ParseState -> List Pattern -> List Char -> Maybe $ List Pattern
     go (InLiteral []) p ('{' :: xs) = Nothing
-    go (InLiteral s) p ('{' :: xs) = go (InParam []) (Literal (collect s) :: p) xs
+    go (InLiteral s) p ('{' :: xs) = go (InParam []) (Literal (reverse s) :: p) xs
     go (InLiteral []) p ('*' :: xs) = Nothing
-    go (InLiteral s) p ('*' :: xs) = go InRest (Literal (collect s) :: p) xs
-    go (InLiteral s) p ['/'] = Just $ Literal (collect s) :: p
+    go (InLiteral s) p ('*' :: xs) = go InRest (Literal (reverse s) :: p) xs
+    go (InLiteral s) p ['/'] = Just $ Literal (reverse s) :: p
     go (InLiteral []) p [] = Just p
-    go (InLiteral s) p [] = Just $ Literal (collect s) :: p
+    go (InLiteral s) p [] = Just $ Literal (reverse s) :: p
     go (InLiteral s) p (x :: xs) = go (InLiteral $ x :: s) p xs
     go (InParam s) p ('}' :: xs) = 
-      let param = Param $ collect s
+      let param = Param $ reverse s
       in if elem param p || null s
       then Nothing
       else go (InLiteral []) (param :: p) xs
     go (InParam s) p [] = Nothing
+    go (InParam []) p (x :: xs) =
+      if isAlpha x
+      then go (InParam [x]) p xs
+      else Nothing
     go (InParam s) p (x :: xs) =
-      if elem x allowed
+      if isAllowedInParam x
       then go (InParam (x :: s)) p xs
       else Nothing
     go InRest p [] = Just $ Rest :: p
@@ -81,19 +81,17 @@ matcher s (MkParsedPattern ls) = go ls (unpack s) $ MkPath s [] ""
     go [] [] p = Just p
     go [] xs _ = Nothing
     go (Literal l :: ps) xs p = do
-      remaining <- consumeLiteral (unpack l) xs
+      remaining <- consumeLiteral l xs
       go ps remaining p
-    go (Param param :: Literal l :: ps) xs p with (strM l)
-      go (Param param :: Literal "" :: ps) xs p | StrNil = Nothing
-      go (Param param :: Literal l@(strCons f fs) :: ps) xs p | StrCons f fs =
+    go (Param param :: Literal l@(f::fs) :: ps) xs p =
         let (value, remaining) = List.break (==f) xs
         in if null value
         then Nothing
-        else go (Literal l :: ps) remaining $ { params $= ((param, pack value)::) } p
+        else go (Literal l :: ps) remaining $ { params $= ((pack param, pack value)::) } p
     go (Param param :: Nil) xs p =
       if null xs
       then Nothing
-      else Just $ { params $= ((param, pack xs)::) } p
+      else Just $ { params $= ((pack param, pack xs)::) } p
     go (Rest :: Nil) xs p = Just $ { rest := pack xs } p
     go _ _ _ = Nothing
 
