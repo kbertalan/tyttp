@@ -93,12 +93,12 @@ hStatic folder step = eitherT returnError returnSuccess $ do
       StatError e => sendError INTERNAL_SERVER_ERROR ("File error: " <+> e.message) step
       NotAFile s => sendError NOT_FOUND ("Could not found file: " <+> s) step
 
-hStatic2 : String -> StaticRequest String -> IO $ StaticResponse String
-hStatic2 folder step = do
-    let error = delay $ sendError BAD_REQUEST "Invalid method" step
+hRouting : String -> StaticRequest String -> IO $ StaticResponse String
+hRouting folder step = do
+    let error = delay $ sendError NOT_FOUND "Resource could not be found" step
     R.routesWithDefault error
-      [ R.get $ pattern "/*" :> hStatic folder
-      , R.post :> sendError INTERNAL_SERVER_ERROR "Should not run this"
+      [ R.get $ pattern "/static/*" :> hStatic folder
+      , R.post :> sendError INTERNAL_SERVER_ERROR "This is just an example"
       ] step
 
 main : IO ()
@@ -109,5 +109,5 @@ main = eitherT putStrLn pure $ do
   putStrLn "Starting static server in folder: \{folder}"
 
   http <- HTTP.require
-  ignore $ HTTP.listen $ hStatic2 folder
+  ignore $ HTTP.listen $ hRouting folder
 
