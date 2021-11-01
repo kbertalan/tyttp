@@ -13,7 +13,6 @@ modules = TyTTP
 	, TyTTP.Step
 	, TyTTP.Stream
 	, TyTTP.URL
-	, Data.Either.Ext
 	, Node
 	, Node.Buffer
 	, Node.Error

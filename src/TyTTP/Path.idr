@@ -2,7 +2,7 @@ module TyTTP.Path
 
 import Data.List
 import Data.String
-import public Data.Either.Ext
+import public Data.Either
 import TyTTP
 import TyTTP.URL
 
