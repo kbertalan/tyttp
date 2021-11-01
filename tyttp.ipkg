@@ -1,27 +1,28 @@
 package tyttp
 
 modules = TyTTP
-	, TyTTP.Adapter.Node.HTTP
-	, TyTTP.Combinators
-	, TyTTP.Combinators.HTTP
-	, TyTTP.HTTP
-	, TyTTP.HTTP.Routing
-	, TyTTP.Path
-	, TyTTP.Request
-	, TyTTP.Response
-	, TyTTP.Routing
-	, TyTTP.Step
-	, TyTTP.Stream
-	, TyTTP.URL
-	, Node
-	, Node.Buffer
-	, Node.Error
-	, Node.FS
-	, Node.FS.Stats
-	, Node.FS.Stream
-	, Node.HTTP
-	, Node.HTTP.Client
-	, Node.HTTP.Server
+  , TyTTP.Adapter.Node.HTTP
+  , TyTTP.Adapter.Node.Static
+  , TyTTP.Combinators
+  , TyTTP.Combinators.HTTP
+  , TyTTP.HTTP
+  , TyTTP.HTTP.Routing
+  , TyTTP.Path
+  , TyTTP.Request
+  , TyTTP.Response
+  , TyTTP.Routing
+  , TyTTP.Step
+  , TyTTP.Stream
+  , TyTTP.URL
+  , Node
+  , Node.Buffer
+  , Node.Error
+  , Node.FS
+  , Node.FS.Stats
+  , Node.FS.Stream
+  , Node.HTTP
+  , Node.HTTP.Client
+  , Node.HTTP.Server
 
 depends = base
 
