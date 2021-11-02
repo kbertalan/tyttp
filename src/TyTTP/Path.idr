@@ -117,17 +117,17 @@ export
 pattern : Monad m 
   => Alternative m 
   => (str : String)
-  -> {default (Path.parse str) parsed : _}
-  -> {auto 0 ok : IsRight parsed }
+  -> {auto 0 ok : IsRight (Path.parse str)}
   -> (
     Step me (URL auth Path s) h1 fn st h2 a b
     -> m $ Step me' (URL auth Path s) h1' fn' st' h2' a' b'
   )
   -> Step me (URL auth String s) h1 fn st h2 a b
   -> m $ Step me' (URL auth String s) h1' fn' st' h2' a' b'
-pattern str {parsed = (Right parsedPattern)} handler step =
-  case matcher step.request.url.path parsedPattern of
-     Just p => do
-       result <- handler $ { request.url := { path := p } step.request.url } step
-       pure $ { request.url := { path := step.request.url.path } result.request.url } result
-     Nothing => empty
+pattern str {ok} handler step with (Path.parse str)
+  _ | Right parsedPattern =
+    case matcher step.request.url.path parsedPattern of
+      Just p => do
+        result <- handler $ { request.url := { path := p } step.request.url } step
+        pure $ { request.url := { path := step.request.url.path } result.request.url } result
+      Nothing => empty
