@@ -6,6 +6,8 @@ import public Data.Either
 import TyTTP
 import TyTTP.URL
 
+%default total
+
 data Elem : Type where
   Literal : List Char -> Elem
   Param : List Char -> Elem
@@ -100,12 +102,12 @@ matcher s (MkParsedPattern ls) = go ls (unpack s) $ MkPath s [] ""
     go [] xs _ = Nothing
     go (Literal l :: ps) xs p = do
       remaining <- consumeLiteral l xs
-      go ps remaining p
+      go ps (assert_smaller xs remaining) p
     go (Param param :: Literal l@(f::fs) :: ps) xs p =
         let (value, remaining) = List.break (==f) xs
         in if null value
         then Nothing
-        else go (Literal l :: ps) remaining $ { params $= ((pack param, pack value)::) } p
+        else go (Literal l :: ps) (assert_smaller xs remaining) $ { params $= ((pack param, pack value)::) } p
     go (Param param :: Nil) xs p =
       if null xs
       then Nothing
