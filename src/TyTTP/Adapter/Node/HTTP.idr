@@ -8,10 +8,6 @@ import TyTTP
 import TyTTP.HTTP as HTTP
 
 public export
-StringHeaders : Type
-StringHeaders = List (String, String)
-
-public export
 RawHttpRequest : { auto monad : Type -> Type } -> { auto error : Type } -> Type
 RawHttpRequest = HttpRequest { monad } { error } String StringHeaders Buffer
 

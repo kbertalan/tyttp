@@ -68,6 +68,9 @@ selectBodyByMethod m withoutBody withBody = case m of
   CONNECT => withoutBody
   OtherMethod _ => withBody
 
+public export
+StringHeaders : Type
+StringHeaders = List (String, String)
 
 public export
 bodyOf : { monad : Type -> Type } -> { error : Type } -> Method -> Type -> Type
