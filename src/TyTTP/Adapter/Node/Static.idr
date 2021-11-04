@@ -46,7 +46,7 @@ hStatic folder returnError step = eitherT (flip returnError step) returnSuccess 
         file = "\{folder}\{resource}"
 
     fs <- FS.require
-    Right stats <- stat file
+    Right stats <- stat_sync StatsInt file
       | Left e => throwError $ case e.code of
          SystemError ENOENT => NotAFile resource
          _ => StatError e
@@ -60,7 +60,7 @@ hStatic folder returnError step = eitherT (flip returnError step) returnSuccess 
     readStream <- createReadStream file
 
     pure $ MkStaticSuccessResult
-            { size = stats.size }
+            { size = Stats.size stats }
             { stream = MkPublisher $ \s => do
                 readStream.onData  s.onNext
                 readStream.onEnd   s.onSucceded
