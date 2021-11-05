@@ -31,7 +31,7 @@ routesWithDefault def handlers step = do
     | Nothing => def step
   pure result
 
-infixl 1 :>
+infixr 0 :>
 export
 (:>) : MonadTrans t
   => Monad n

@@ -11,6 +11,7 @@ modules = TyTTP
   , TyTTP.Request
   , TyTTP.Response
   , TyTTP.Routing
+  , TyTTP.Search
   , TyTTP.Step
   , TyTTP.Stream
   , TyTTP.URL

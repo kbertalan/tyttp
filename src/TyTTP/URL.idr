@@ -37,7 +37,7 @@ namespace Simple
     = EmptyString
     | MissingAuthorityOrPath
 
-  export
+  export -- visible for testing
   parse : String -> Either URLParserError SimpleURL
   parse str = scheme (unpack $ trim str) $ MkURL Nothing Nothing "" ""
     where

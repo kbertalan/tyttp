@@ -16,6 +16,7 @@ import TyTTP.HTTP
 import TyTTP.HTTP.Routing as R
 import TyTTP.Path
 import TyTTP.Routing as R
+import TyTTP.Search
 import TyTTP.URL
 
 sendError : Status -> String -> StaticRequest a -> IO $ StaticResponse a
@@ -39,6 +40,21 @@ staticFileError code step = case code of
   StatError e => sendError INTERNAL_SERVER_ERROR ("File error: " <+> e.message) step
   NotAFile s => sendError NOT_FOUND ("Could not found file: " <+> s) step
 
+hQuery : Applicative m
+  => (src -> String)
+  -> Step me (URL auth pth src) h1 fn s h2 a ()
+  -> m $ Step me (URL auth pth src) h1 fn Status StringHeaders a (Publisher IO NodeError Buffer)
+hQuery toString step = do
+  let query = toString step.request.url.search
+      stream : Publisher IO NodeError Buffer = Stream.singleton $ fromString query
+  pure $ { response.body := stream
+         , response.headers := 
+           [ ("Content-Type", "text/plain")
+           , ("Content-Length", show $ length query)
+           ]
+         , response.status := OK
+         } step
+
 hRouting : String -> StaticRequest String -> IO $ StaticResponse String
 hRouting folder =
     let routingError = sendError NOT_FOUND "Resource could not be found"
@@ -47,6 +63,8 @@ hRouting folder =
       Simple.urlWithHandler urlError :> R.routesWithDefault routingError
           [ R.get $ pattern "/static/*" :> hStatic folder staticFileError 
           , R.post :> sendError INTERNAL_SERVER_ERROR "This is just an example"
+          , R.get $ pattern "/query" :> hQuery id
+          , R.get $ pattern "/parsed" :> Simple.search $ hQuery show
           ]
 
 main : IO ()
