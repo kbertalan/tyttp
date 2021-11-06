@@ -3,6 +3,7 @@ package tyttp
 modules = TyTTP
   , TyTTP.Adapter.Node.HTTP
   , TyTTP.Adapter.Node.Static
+  , TyTTP.Adapter.Node.URI
   , TyTTP.Core.Request
   , TyTTP.Core.Response
   , TyTTP.Core.Step

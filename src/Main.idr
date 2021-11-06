@@ -12,6 +12,7 @@ import System
 import System.Directory
 import TyTTP.Adapter.Node.HTTP
 import TyTTP.Adapter.Node.Static
+import TyTTP.Adapter.Node.URI
 import TyTTP.HTTP
 import TyTTP.HTTP.Routing
 import TyTTP.URL
@@ -58,8 +59,11 @@ hRouting : String -> StaticRequest String -> IO $ StaticResponse String
 hRouting folder =
     let routingError = sendError NOT_FOUND "Resource could not be found"
         urlError = \err => sendError BAD_REQUEST "URL has invalid format"
+        uriError = sendError BAD_REQUEST "URI decode has failed"
     in
-      Simple.urlWithHandler urlError :> routesWithDefault routingError
+      uriWithDefault uriError
+        :> urlWithHandler urlError
+        :> routesWithDefault routingError
           [ get $ pattern "/static/*" :> hStatic folder staticFileError 
           , post :> sendError INTERNAL_SERVER_ERROR "This is just an example"
           , get $ pattern "/query" :> hQuery id
