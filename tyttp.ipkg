@@ -24,6 +24,7 @@ modules = TyTTP
   , Node.HTTP
   , Node.HTTP.Client
   , Node.HTTP.Server
+  , Node.URI
 
 depends = base
 
