@@ -15,7 +15,7 @@ routes : Alternative m
 routes handlers step = choiceMap ($ step) handlers
 
 export
-routesWithDefault : Monad m
+routes' : Monad m
   => (
     Step me u h1 fn s h2 a b
     -> m $ Step me' p' h1' fn' s' h2' a' b'
@@ -26,7 +26,7 @@ routesWithDefault : Monad m
   )
   -> Step me u h1 fn s h2 a b
   -> m $ Step me' p' h1' fn' s' h2' a' b'
-routesWithDefault def handlers step = do
+routes' def handlers step = do
   Just result <- runMaybeT $ routes handlers step
     | Nothing => def step
   pure result

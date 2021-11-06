@@ -82,7 +82,7 @@ namespace Simple
     Left err => throwError err
 
   export
-  urlWithHandler : Monad m
+  url' : Monad m
     => (
       URLParserError
       -> Step me String h1 fn s h2 a b
@@ -94,7 +94,7 @@ namespace Simple
     )
     -> Step me String h1 fn s h2 a b
     -> m $ Step me' String h1' fn' s' h2' a' b'
-  urlWithHandler errHandler handler step = do
+  url' errHandler handler step = do
     Right result <- runEitherT $ Simple.url handler step
       | Left err => errHandler err step
     pure result

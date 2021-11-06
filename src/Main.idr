@@ -61,9 +61,7 @@ hRouting folder =
         urlError = \err => sendError BAD_REQUEST "URL has invalid format"
         uriError = sendError BAD_REQUEST "URI decode has failed"
     in
-      uriWithDefault uriError
-        :> urlWithHandler urlError
-        :> routesWithDefault routingError
+      uri' uriError :> url' urlError :> routes' routingError
           [ get $ pattern "/static/*" :> hStatic folder staticFileError 
           , post :> sendError INTERNAL_SERVER_ERROR "This is just an example"
           , get $ pattern "/query" :> hQuery id

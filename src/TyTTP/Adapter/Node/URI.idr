@@ -17,7 +17,7 @@ uri handler step = case decodeURI step.request.url of
   Left _ => empty
 
 export
-uriWithDefault : Monad m
+uri' : Monad m
   => (
     Step me String h1 fn s h2 a b
     -> m $ Step me' String h1' fn' s' h2' a' b'
@@ -28,7 +28,7 @@ uriWithDefault : Monad m
   )
   -> Step me String h1 fn s h2 a b
   -> m $ Step me' String h1' fn' s' h2' a' b'
-uriWithDefault defHandler handler step = do
+uri' defHandler handler step = do
   Just result <- runMaybeT $ uri handler step
     | Nothing => defHandler step
   pure result
