@@ -1,7 +1,6 @@
-module TyTTP.Combinators
+module TyTTP.Support.Combinators
 
 import TyTTP
-import TyTTP.Stream
 import Control.Monad.Error.Interface
 
 export
@@ -19,8 +18,8 @@ hEcho step = pure $ map (const step.request.body) step
 export
 hMapRequest : Applicative m
   => (a -> a')
-  -> Step me h1 u TyTTP.Request.simpleBody s h2 a b
-  -> m $ Step me h1 u TyTTP.Request.simpleBody s h2 a' b
+  -> Step me h1 u Request.simpleBody s h2 a b
+  -> m $ Step me h1 u Request.simpleBody s h2 a' b
 hMapRequest f step = pure $ mapFst f step
 
 export
@@ -33,8 +32,8 @@ hMapResponse f step = pure $ map f step
 export
 hConstRequest : Applicative m
   => a'
-  -> Step me h1 u TyTTP.Request.simpleBody s h2 a b
-  -> m $ Step me h1 u TyTTP.Request.simpleBody s h2 a' b
+  -> Step me h1 u Request.simpleBody s h2 a b
+  -> m $ Step me h1 u Request.simpleBody s h2 a' b
 hConstRequest x = hMapRequest $ const x
 
 export
@@ -47,8 +46,8 @@ hConstResponse x = hMapResponse $ const x
 export
 hParseRequest : MonadError e m
   => (String -> m a')
-  -> Step me h1 u TyTTP.Request.simpleBody s h2 String b
-  -> m $ Step me h1 u TyTTP.Request.simpleBody s h2 a' b
+  -> Step me h1 u Request.simpleBody s h2 String b
+  -> m $ Step me h1 u Request.simpleBody s h2 a' b
 hParseRequest parser step = do
   result <- parser step.request.body
   hConstRequest result step

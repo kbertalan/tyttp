@@ -1,9 +1,9 @@
 module Basic
 
 import TyTTP
-import TyTTP.Combinators
+import TyTTP.Support.Combinators
 
-exampleBasic : Step () String () TyTTP.Request.simpleBody () () String String -> IO ()
+exampleBasic : Step () String () Request.simpleBody () () String String -> IO ()
 exampleBasic initialStep = do
   let handlers =
         [ hId

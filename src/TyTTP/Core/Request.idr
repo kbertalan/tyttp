@@ -1,4 +1,4 @@
-module TyTTP.Request
+module TyTTP.Core.Request
 
 public export
 simpleBody : { 0 m : Type } -> m -> Type -> Type
@@ -13,6 +13,6 @@ record Request m u h (f : m -> Type -> Type) a where
   body : f method a
 
 export
-Functor (Request m u h TyTTP.Request.simpleBody) where
+Functor (Request m u h Request.simpleBody) where
   map f req = record { body $= f } req
 

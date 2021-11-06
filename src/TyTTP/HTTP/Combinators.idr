@@ -1,4 +1,4 @@
-module TyTTP.Combinators.HTTP
+module TyTTP.HTTP.Combinators
 
 import TyTTP
 import TyTTP.HTTP
@@ -11,7 +11,7 @@ hToPublisher : Applicative m
   -> ( step : Step Method h1 u (TyTTP.HTTP.bodyOf {error = e} {monad = m}) s h2 a ((TyTTP.HTTP.bodyOf {error = e} {monad = m}) me a) )
   -> m $ Step Method h1 u (TyTTP.HTTP.bodyOf {error = e} {monad = m}) s h2 a (Publisher m e a)
 hToPublisher = \s =>
-  let originalPublisher : Lazy (Publisher m e a) = believe_me $ TyTTP.Response.Response.body $ s.response
+  let originalPublisher : Lazy (Publisher m e a) = believe_me $ Response.body $ s.response
       publisher : Publisher m e a = selectBodyByMethod me empty originalPublisher
   in
     pure $ record { response.body = publisher } s

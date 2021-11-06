@@ -1,5 +1,5 @@
 module TyTTP
 
-import public TyTTP.Request
-import public TyTTP.Response
-import public TyTTP.Step
+import public TyTTP.Core.Request
+import public TyTTP.Core.Response
+import public TyTTP.Core.Step

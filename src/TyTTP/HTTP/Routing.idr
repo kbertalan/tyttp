@@ -1,6 +1,6 @@
 module TyTTP.HTTP.Routing
 
-import public TyTTP.Routing
+import public TyTTP.Support.Routing
 import TyTTP
 import TyTTP.HTTP
 

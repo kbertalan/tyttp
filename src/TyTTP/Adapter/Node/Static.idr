@@ -8,8 +8,8 @@ import Node.FS.Stats
 import Node.FS.Stream
 import TyTTP.Adapter.Node.HTTP
 import TyTTP.HTTP
-import TyTTP.Path
 import TyTTP.URL
+import TyTTP.URL.Path
 
 public export
 Resource : Type

@@ -1,4 +1,4 @@
-module TyTTP.Path
+module TyTTP.URL.Path
 
 import Data.List
 import Data.String

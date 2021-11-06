@@ -3,18 +3,18 @@ package tyttp
 modules = TyTTP
   , TyTTP.Adapter.Node.HTTP
   , TyTTP.Adapter.Node.Static
-  , TyTTP.Combinators
-  , TyTTP.Combinators.HTTP
+  , TyTTP.Core.Request
+  , TyTTP.Core.Response
+  , TyTTP.Core.Step
   , TyTTP.HTTP
+  , TyTTP.HTTP.Combinators
   , TyTTP.HTTP.Routing
-  , TyTTP.Path
-  , TyTTP.Request
-  , TyTTP.Response
-  , TyTTP.Routing
-  , TyTTP.Search
-  , TyTTP.Step
-  , TyTTP.Stream
+  , TyTTP.Support.Combinators
+  , TyTTP.Support.Routing
+  , TyTTP.Support.Stream
   , TyTTP.URL
+  , TyTTP.URL.Path
+  , TyTTP.URL.Search
   , Node
   , Node.Buffer
   , Node.Error

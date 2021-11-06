@@ -7,12 +7,12 @@ import Node.Error
 import Node.HTTP.Client
 import Node.HTTP.Server
 import TyTTP.Adapter.Node.HTTP as HTTP
-import TyTTP.Combinators
-import TyTTP.Combinators.HTTP
 import TyTTP.HTTP
+import TyTTP.HTTP.Combinators
+import TyTTP.Support.Combinators
 
-hReflect : Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer ()
-  -> IO $ Step Method String StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
+hReflect : Step Method String StringHeaders (HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer ()
+  -> IO $ Step Method String StringHeaders (HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
 hReflect step = do
   let m = step.request.method
       h = step.request.headers

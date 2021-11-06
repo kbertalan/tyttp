@@ -4,7 +4,7 @@ import Control.Monad.Error.Interface
 import Control.Monad.Error.Either
 import Data.String
 import TyTTP
-import TyTTP.Combinators
+import TyTTP.Support.Combinators
 
 orThrow : MonadError e m => Maybe a -> e -> m a
 orThrow m e = case m of
@@ -16,7 +16,7 @@ data Error = ParseError String
 parseIntegerM : MonadError Error m => String -> m Int
 parseIntegerM s = parseInteger s `orThrow` ParseError ("Could not parse as int: " <+> s)
 
-exampleErrorHandling : Step () String () TyTTP.Request.simpleBody () () String String -> IO ()
+exampleErrorHandling : Step () String () Request.simpleBody () () String String -> IO ()
 exampleErrorHandling initialStep = do
   putStrLn $ "\nErrors: " <+> initialStep.request.body <+> "\n"
 

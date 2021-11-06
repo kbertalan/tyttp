@@ -1,4 +1,4 @@
-module TyTTP.Search
+module TyTTP.URL.Search
 
 import Control.Monad.Either
 import Data.List

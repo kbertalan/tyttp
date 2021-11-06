@@ -13,11 +13,10 @@ import System.Directory
 import TyTTP.Adapter.Node.HTTP
 import TyTTP.Adapter.Node.Static
 import TyTTP.HTTP
-import TyTTP.HTTP.Routing as R
-import TyTTP.Path
-import TyTTP.Routing as R
-import TyTTP.Search
+import TyTTP.HTTP.Routing
 import TyTTP.URL
+import TyTTP.URL.Path
+import TyTTP.URL.Search
 
 sendError : Status -> String -> StaticRequest a -> IO $ StaticResponse a
 sendError status str step = do
@@ -60,11 +59,11 @@ hRouting folder =
     let routingError = sendError NOT_FOUND "Resource could not be found"
         urlError = \err => sendError BAD_REQUEST "URL has invalid format"
     in
-      Simple.urlWithHandler urlError :> R.routesWithDefault routingError
-          [ R.get $ pattern "/static/*" :> hStatic folder staticFileError 
-          , R.post :> sendError INTERNAL_SERVER_ERROR "This is just an example"
-          , R.get $ pattern "/query" :> hQuery id
-          , R.get $ pattern "/parsed" :> Simple.search $ hQuery show
+      Simple.urlWithHandler urlError :> routesWithDefault routingError
+          [ get $ pattern "/static/*" :> hStatic folder staticFileError 
+          , post :> sendError INTERNAL_SERVER_ERROR "This is just an example"
+          , get $ pattern "/query" :> hQuery id
+          , get $ pattern "/parsed" :> Simple.search $ hQuery show
           ]
 
 main : IO ()

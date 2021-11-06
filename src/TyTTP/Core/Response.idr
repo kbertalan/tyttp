@@ -1,4 +1,4 @@
-module TyTTP.Response
+module TyTTP.Core.Response
 
 public export
 record Response s h a where

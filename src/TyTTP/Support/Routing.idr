@@ -1,8 +1,8 @@
-module TyTTP.Routing
+module TyTTP.Support.Routing
 
 import Control.Monad.Maybe
 import Control.Monad.Trans
-import TyTTP.Step
+import TyTTP
 
 export
 routes : Alternative m
