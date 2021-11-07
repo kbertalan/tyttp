@@ -11,6 +11,7 @@ modules = TyTTP
   , TyTTP.HTTP.Combinators
   , TyTTP.HTTP.Routing
   , TyTTP.Support.Combinators
+  , TyTTP.Support.Promise
   , TyTTP.Support.Routing
   , TyTTP.Support.Stream
   , TyTTP.URL

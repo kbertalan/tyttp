@@ -15,6 +15,7 @@ import TyTTP.Adapter.Node.Static
 import TyTTP.Adapter.Node.URI
 import TyTTP.HTTP
 import TyTTP.HTTP.Routing
+import TyTTP.Support.Promise
 import TyTTP.URL
 import TyTTP.URL.Path
 import TyTTP.URL.Search
@@ -76,5 +77,5 @@ main = eitherT putStrLn pure $ do
   putStrLn "Starting static server in folder: \{folder}"
 
   http <- HTTP.require
-  ignore $ HTTP.listen $ hRouting folder
+  ignore $ HTTP.listen $ \s => lift $ hRouting folder s
 

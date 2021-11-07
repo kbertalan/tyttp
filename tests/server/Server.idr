@@ -1,5 +1,6 @@
 module Server
 
+import Control.Monad.Trans
 import Data.Buffer
 import Node
 import Node.Buffer
@@ -10,6 +11,7 @@ import TyTTP.Adapter.Node.HTTP as HTTP
 import TyTTP.HTTP
 import TyTTP.HTTP.Combinators
 import TyTTP.Support.Combinators
+import TyTTP.Support.Promise
 
 hReflect : Step Method String StringHeaders (HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer ()
   -> IO $ Step Method String StringHeaders (HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
@@ -29,7 +31,7 @@ hReflect step = do
 main : IO ()
 main = do
   http <- require
-  server <- HTTP.listen hReflect
+  server <- HTTP.listen $ \s => lift $ hReflect s
 
   defer $ do
     ignore $ http.get "http://localhost:3000" $ \res => do

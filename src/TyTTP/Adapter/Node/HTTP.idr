@@ -6,6 +6,7 @@ import Node.Error
 import Node.HTTP.Server
 import TyTTP
 import TyTTP.HTTP as HTTP
+import TyTTP.Support.Promise
 
 public export
 RawHttpRequest : { auto monad : Type -> Type } -> { auto error : Type } -> Type
@@ -31,6 +32,21 @@ toNodeResponse res nodeRes = do
       newHeaders <- empty
       foldlM (\hs, (k,v) => hs.setHeader k v) newHeaders h
 
+fromPromiseToNodeResponse : Promise NodeError IO (Step Method String StringHeaders f Status StringHeaders b $ Publisher IO NodeError Buffer) -> ServerResponse -> IO ()
+fromPromiseToNodeResponse (MkPromise cont) nodeRes =
+  let callbacks = MkCallbacks
+        { onSucceded = \a => toNodeResponse a.response nodeRes }
+        { onFailed = \e => do
+            h1 <- empty
+            h2 <- h1.setHeader "Content-Type" "plain/text"
+            headers <- h2.setHeader "Content-Length" $ show $ length e.message
+            nodeRes.writeHead ((.code) INTERNAL_SERVER_ERROR) headers
+            nodeRes.write e.message
+            nodeRes.end
+        }
+  in
+    cont callbacks
+
 fromNodeRequest : Node.HTTP.Server.IncomingMessage -> RawHttpRequest { monad = IO } { error = NodeError }
 fromNodeRequest nodeReq =
   let method = parseMethod nodeReq.method
@@ -43,10 +59,12 @@ fromNodeRequest nodeReq =
 
 export
 listen : HasIO io
-   => {auto http : HTTP}
+   => { auto http : HTTP }
    -> { default 3000 port : Int }
-   -> ( Step Method String StringHeaders (HTTP.bodyOf { monad = IO } {error = NodeError}) Status StringHeaders Buffer ()
-     -> IO $ Step Method String StringHeaders f Status StringHeaders b (Publisher IO NodeError Buffer))
+   -> ( 
+    Step Method String StringHeaders (HTTP.bodyOf { monad = IO } {error = NodeError}) Status StringHeaders Buffer ()
+     -> Promise NodeError IO $ Step Method String StringHeaders f Status StringHeaders b (Publisher IO NodeError Buffer)
+  )
    -> io Server
 listen {http} {port} handler = do
   server <- http.createServer
@@ -54,10 +72,9 @@ listen {http} {port} handler = do
   server.onRequest $ \req => \res => do
     let handlerReq = fromNodeRequest req
         initialRes = MkResponse OK [] () {h = StringHeaders}
+        result = handler $ MkStep handlerReq initialRes
 
-    result <- handler $ MkStep handlerReq initialRes
-
-    toNodeResponse result.response res
+    fromPromiseToNodeResponse result res
 
   server.listen port
   pure server
