@@ -77,5 +77,5 @@ main = eitherT putStrLn pure $ do
   putStrLn "Starting static server in folder: \{folder}"
 
   http <- HTTP.require
-  ignore $ HTTP.listen $ \s => lift $ hRouting folder s
+  ignore $ HTTP.listen :> hRouting folder
 

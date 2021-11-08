@@ -34,10 +34,9 @@ routes' def handlers step = do
 infixr 0 :>
 export
 (:>) : MonadTrans t
-  => Monad n
   => Monad m
-  => (f : (a -> (t m) b) -> c -> n d)
+  => (f : (a -> (t m) b) -> c)
   -> (handler : a -> m b)
-  -> (c -> n d)
+  -> c
 (:>) f handler = f $ \a => lift $ handler a
 

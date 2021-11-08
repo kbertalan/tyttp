@@ -36,3 +36,7 @@ mutual
 export
 MonadTrans (Promise e) where
   lift ma = MkPromise $ \cont => ma >>= cont.onSucceded
+
+export
+HasIO m => HasIO (Promise e m) where
+  liftIO = lift . liftIO
