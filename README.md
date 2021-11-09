@@ -6,6 +6,7 @@ A type safe _experimental_ web framework for idris2 targeting node js.
 
 - HTTP server
 - Streaming from end-to-end
+- Supports async execution via an Inigo style Promise module
 
 - Routing - based on Alternative monad
   - Match HTTP methods
@@ -17,6 +18,8 @@ A type safe _experimental_ web framework for idris2 targeting node js.
 - Example text based echo implementation in test
 
 - Primitive Idris2 support for HTTP clients of NodeJS
+
+- Serving a 41MB binary file for 1000 request with 4 requester on local machine takes 22.6 seconds, mean response time 90ms, 95% - 159ms, 99% 206ms.
 
 # Prerequisities
 
