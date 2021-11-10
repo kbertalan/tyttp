@@ -1,4 +1,4 @@
-module TyTTP.Support.Promise
+module TyTTP.Core.Promise
 
 import Control.Monad.Trans
 

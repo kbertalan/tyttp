@@ -11,7 +11,6 @@ import TyTTP.Adapter.Node.HTTP as HTTP
 import TyTTP.HTTP
 import TyTTP.HTTP.Combinators
 import TyTTP.Support.Combinators
-import TyTTP.Support.Promise
 
 hReflect : Step Method String StringHeaders (HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer ()
   -> IO $ Step Method String StringHeaders (HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)

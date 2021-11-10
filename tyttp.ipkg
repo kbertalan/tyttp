@@ -4,16 +4,16 @@ modules = TyTTP
   , TyTTP.Adapter.Node.HTTP
   , TyTTP.Adapter.Node.Static
   , TyTTP.Adapter.Node.URI
+  , TyTTP.Core.Promise
   , TyTTP.Core.Request
   , TyTTP.Core.Response
   , TyTTP.Core.Step
+  , TyTTP.Core.Stream
   , TyTTP.HTTP
   , TyTTP.HTTP.Combinators
   , TyTTP.HTTP.Routing
   , TyTTP.Support.Combinators
-  , TyTTP.Support.Promise
   , TyTTP.Support.Routing
-  , TyTTP.Support.Stream
   , TyTTP.URL
   , TyTTP.URL.Path
   , TyTTP.URL.Search
@@ -27,6 +27,7 @@ modules = TyTTP
   , Node.HTTP.Client
   , Node.HTTP.Server
   , Node.URI
+  , Data.Buffer.Ext
 
 depends = base
 

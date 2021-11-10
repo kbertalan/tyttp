@@ -1,7 +1,6 @@
 module TyTTP.HTTP
 
 import public TyTTP
-import public TyTTP.Support.Stream
 
 public export
 data Method

@@ -1,5 +1,6 @@
 module TyTTP.Core.Step
 
+import Control.Monad.Trans
 import TyTTP.Core.Request
 import TyTTP.Core.Response
 
@@ -16,4 +17,13 @@ Functor (Step me u h1 fn s h2 a) where
 export
 Bifunctor (Step me u h1 Request.simpleBody s h2) where
   bimap f g step = record { request $= map f, response $= map g } step
+
+infixr 0 :>
+export
+(:>) : MonadTrans t
+  => Monad m
+  => (f : (a -> (t m) b) -> c)
+  -> (handler : a -> m b)
+  -> c
+(:>) f handler = f $ \a => lift $ handler a
 

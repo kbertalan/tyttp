@@ -1,7 +1,6 @@
 module TyTTP.Support.Routing
 
 import Control.Monad.Maybe
-import Control.Monad.Trans
 import TyTTP
 
 export
@@ -30,13 +29,4 @@ routes' def handlers step = do
   Just result <- runMaybeT $ routes handlers step
     | Nothing => def step
   pure result
-
-infixr 0 :>
-export
-(:>) : MonadTrans t
-  => Monad m
-  => (f : (a -> (t m) b) -> c)
-  -> (handler : a -> m b)
-  -> c
-(:>) f handler = f $ \a => lift $ handler a
 

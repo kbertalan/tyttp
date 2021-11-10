@@ -6,7 +6,6 @@ import Node.Error
 import Node.HTTP.Server
 import TyTTP
 import TyTTP.HTTP as HTTP
-import TyTTP.Support.Promise
 
 public export
 RawHttpRequest : { auto monad : Type -> Type } -> { auto error : Type } -> Type

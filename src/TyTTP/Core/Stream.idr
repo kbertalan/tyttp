@@ -1,4 +1,4 @@
-module TyTTP.Support.Stream
+module TyTTP.Core.Stream
 
 import Data.Contravariant
 
