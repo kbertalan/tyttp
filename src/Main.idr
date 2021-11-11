@@ -15,7 +15,6 @@ import TyTTP.Adapter.Node.Static
 import TyTTP.Adapter.Node.URI
 import TyTTP.HTTP
 import TyTTP.HTTP.Routing
-import TyTTP.Support.Promise
 import TyTTP.URL
 import TyTTP.URL.Path
 import TyTTP.URL.Search
