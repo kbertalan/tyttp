@@ -1,6 +1,9 @@
 module TyTTP.Adapter.Node.Static
 
 import Data.Buffer
+import Data.Maybe
+import Data.Mime.Apache
+import Data.List
 import Control.Monad.Either
 import Node.Error
 import Node.FS
@@ -32,6 +35,7 @@ record StaticSuccesResult where
   constructor MkStaticSuccessResult
   size : Int
   stream : Publisher IO NodeError Buffer
+  mime : Mime
 
 export
 hStatic : (folder : String)
@@ -60,16 +64,36 @@ hStatic folder returnError step = eitherT (flip returnError step) returnSuccess 
     readStream <- createReadStream file
 
     pure $ MkStaticSuccessResult
-            { size = Stats.size stats }
-            { stream = MkPublisher $ \s => do
+            { size = Stats.size stats
+            , stream = MkPublisher $ \s => do
                 readStream.onData  s.onNext
                 readStream.onEnd   s.onSucceded
                 readStream.onError s.onFailed
+            , mime = mimeOf file
             }
 
   where
     returnSuccess : StaticSuccesResult -> IO $ StaticResponse (URL a Path s)
     returnSuccess result = do
-      let hs = ("Content-Length", show $ result.size) :: headers step.response 
-      pure $ record { response.status = OK, response.headers = hs, response.body = result.stream } step
+      let hs = [ ("Content-Length", show $ result.size)
+               , ("Content-Type", show $ result.mime)
+               ]
+      pure $ { response.status := OK
+             , response.headers := hs
+             , response.body := result.stream } step
+
+    extensionOf' : (ext: List Char) -> (file: List Char) -> (dot: Bool) -> Maybe (List Char)
+    extensionOf' ext ('.' :: xs) _ = extensionOf' xs xs True
+    extensionOf' ext (x :: xs) dot = extensionOf' ext xs dot
+    extensionOf' ext [] True = Just ext
+    extensionOf' ext [] False = Nothing
+
+    extensionOf : String -> Maybe String
+    extensionOf file = let l = unpack file in
+                           map pack $ extensionOf' l l False
+
+    mimeOf : String -> Mime
+    mimeOf file =
+      fromMaybe TEXT_PLAIN $
+        flip lookup extensions =<< extensionOf file
 
