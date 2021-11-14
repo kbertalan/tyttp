@@ -38,13 +38,14 @@ record StaticSuccesResult where
   mime : Mime
 
 export
-hStatic : (folder : String)
+hStatic : HasIO io
+  => (folder : String)
   -> (returnError : FileServingError
     -> StaticRequest (URL a Path s)
-    -> IO $ StaticResponse (URL a Path s)
+    -> io $ StaticResponse (URL a Path s)
   )
   -> (step : StaticRequest (URL a Path s))
-  -> IO $ StaticResponse (URL a Path s)
+  -> io $ StaticResponse (URL a Path s)
 hStatic folder returnError step = eitherT (flip returnError step) returnSuccess $ do
     let resource = step.request.url.path.rest
         file = "\{folder}\{resource}"
@@ -73,7 +74,7 @@ hStatic folder returnError step = eitherT (flip returnError step) returnSuccess 
             }
 
   where
-    returnSuccess : StaticSuccesResult -> IO $ StaticResponse (URL a Path s)
+    returnSuccess : StaticSuccesResult -> io $ StaticResponse (URL a Path s)
     returnSuccess result = do
       let hs = [ ("Content-Length", show $ result.size)
                , ("Content-Type", show $ result.mime)

@@ -1,110 +1,169 @@
 module TyTTP.HTTP.Routing
 
+import Data.Mime.Apache
+import Data.String
+
 import public TyTTP.Support.Routing
 import TyTTP
 import TyTTP.HTTP
 
-methodRouter : Alternative m
-  => Method 
-  -> (
-    Step Method u h1 fn s h2 a b
-    -> m $ Step me' p' h1' fn' s' h2' a' b'
-  )
-  -> Step Method u h1 fn s h2 a b
-  -> m $ Step me' p' h1' fn' s' h2' a' b'
-methodRouter m handler step =
-  if step.request.method == m 
-  then handler step
-  else empty
+namespace Method
 
-export
-options : Alternative m
-  => (
-    Step Method u h1 fn s h2 a b
+  methodRouter : Alternative m
+    => Method 
+    -> (
+      Step Method u h1 fn s h2 a b
+      -> m $ Step me' p' h1' fn' s' h2' a' b'
+    )
+    -> Step Method u h1 fn s h2 a b
     -> m $ Step me' p' h1' fn' s' h2' a' b'
-  )
-  -> Step Method u h1 fn s h2 a b
-  -> m $ Step me' p' h1' fn' s' h2' a' b'
-options = methodRouter OPTIONS
+  methodRouter m handler step =
+    if step.request.method == m 
+    then handler step
+    else empty
 
-export
-get : Alternative m
-  => (
-    Step Method u h1 fn s h2 a b
+  export
+  options : Alternative m
+    => (
+      Step Method u h1 fn s h2 a b
+      -> m $ Step me' p' h1' fn' s' h2' a' b'
+    )
+    -> Step Method u h1 fn s h2 a b
     -> m $ Step me' p' h1' fn' s' h2' a' b'
-  )
-  -> Step Method u h1 fn s h2 a b
-  -> m $ Step me' p' h1' fn' s' h2' a' b'
-get = methodRouter GET
+  options = methodRouter OPTIONS
 
-export
-head : Alternative m
-  => (
-    Step Method u h1 fn s h2 a b
+  export
+  get : Alternative m
+    => (
+      Step Method u h1 fn s h2 a b
+      -> m $ Step me' p' h1' fn' s' h2' a' b'
+    )
+    -> Step Method u h1 fn s h2 a b
     -> m $ Step me' p' h1' fn' s' h2' a' b'
-  )
-  -> Step Method u h1 fn s h2 a b
-  -> m $ Step me' p' h1' fn' s' h2' a' b'
-head = methodRouter HEAD
+  get = methodRouter GET
 
-export
-post : Alternative m
-  => (
-    Step Method u h1 fn s h2 a b
+  export
+  head : Alternative m
+    => (
+      Step Method u h1 fn s h2 a b
+      -> m $ Step me' p' h1' fn' s' h2' a' b'
+    )
+    -> Step Method u h1 fn s h2 a b
     -> m $ Step me' p' h1' fn' s' h2' a' b'
-  )
-  -> Step Method u h1 fn s h2 a b
-  -> m $ Step me' p' h1' fn' s' h2' a' b'
-post = methodRouter POST
+  head = methodRouter HEAD
 
-export
-put : Alternative m
-  => (
-    Step Method u h1 fn s h2 a b
+  export
+  post : Alternative m
+    => (
+      Step Method u h1 fn s h2 a b
+      -> m $ Step me' p' h1' fn' s' h2' a' b'
+    )
+    -> Step Method u h1 fn s h2 a b
     -> m $ Step me' p' h1' fn' s' h2' a' b'
-  )
-  -> Step Method u h1 fn s h2 a b
-  -> m $ Step me' p' h1' fn' s' h2' a' b'
-put = methodRouter PUT
+  post = methodRouter POST
 
-export
-delete : Alternative m
-  => (
-    Step Method u h1 fn s h2 a b
+  export
+  put : Alternative m
+    => (
+      Step Method u h1 fn s h2 a b
+      -> m $ Step me' p' h1' fn' s' h2' a' b'
+    )
+    -> Step Method u h1 fn s h2 a b
     -> m $ Step me' p' h1' fn' s' h2' a' b'
-  )
-  -> Step Method u h1 fn s h2 a b
-  -> m $ Step me' p' h1' fn' s' h2' a' b'
-delete = methodRouter DELETE
+  put = methodRouter PUT
 
-export
-trace : Alternative m
-  => (
-    Step Method u h1 fn s h2 a b
+  export
+  delete : Alternative m
+    => (
+      Step Method u h1 fn s h2 a b
+      -> m $ Step me' p' h1' fn' s' h2' a' b'
+    )
+    -> Step Method u h1 fn s h2 a b
     -> m $ Step me' p' h1' fn' s' h2' a' b'
-  )
-  -> Step Method u h1 fn s h2 a b
-  -> m $ Step me' p' h1' fn' s' h2' a' b'
-trace = methodRouter TRACE
+  delete = methodRouter DELETE
 
-export
-connect : Alternative m
-  => (
-    Step Method u h1 fn s h2 a b
+  export
+  trace : Alternative m
+    => (
+      Step Method u h1 fn s h2 a b
+      -> m $ Step me' p' h1' fn' s' h2' a' b'
+    )
+    -> Step Method u h1 fn s h2 a b
     -> m $ Step me' p' h1' fn' s' h2' a' b'
-  )
-  -> Step Method u h1 fn s h2 a b
-  -> m $ Step me' p' h1' fn' s' h2' a' b'
-connect = methodRouter CONNECT
+  trace = methodRouter TRACE
 
-export
-other : Alternative m
-  => String
-  -> (
-    Step Method u h1 fn s h2 a b
+  export
+  connect : Alternative m
+    => (
+      Step Method u h1 fn s h2 a b
+      -> m $ Step me' p' h1' fn' s' h2' a' b'
+    )
+    -> Step Method u h1 fn s h2 a b
     -> m $ Step me' p' h1' fn' s' h2' a' b'
-  )
-  -> Step Method u h1 fn s h2 a b
-  -> m $ Step me' p' h1' fn' s' h2' a' b'
-other str = methodRouter (OtherMethod str)
+  connect = methodRouter CONNECT
 
+  export
+  other : Alternative m
+    => String
+    -> (
+      Step Method u h1 fn s h2 a b
+      -> m $ Step me' p' h1' fn' s' h2' a' b'
+    )
+    -> Step Method u h1 fn s h2 a b
+    -> m $ Step me' p' h1' fn' s' h2' a' b'
+  other str = methodRouter (OtherMethod str)
+
+namespace ContentType
+
+  stringMatchesMime : Mime -> String -> Bool
+  stringMatchesMime mime candidate =
+    let mimeString = show mime
+    in isPrefixOf mimeString $ toLower candidate
+
+  export
+  contentType : Alternative m
+    => HasContentType h1
+    => Mime
+    -> (
+      Step me u h1 fn s h2 a b
+      -> m $ Step me' p' h1' fn' s' h2' a' b'
+    )
+    -> Step me u h1 fn s h2 a b
+    -> m $ Step me' p' h1' fn' s' h2' a' b'
+  contentType mime handler step =
+    case stringMatchesMime mime <$> getContentType step.request.headers of
+      Just True => handler step
+      _ => empty
+
+  export
+  json : Alternative m
+    => HasContentType h1
+    => (
+      Step me u h1 fn s h2 a b
+      -> m $ Step me' p' h1 fn' s' h2' a' b'
+    )
+    -> Step me u h1 fn s h2 a b
+    -> m $ Step me' p' h1 fn' s' h2' a' b'
+  json = contentType APPLICATION_JSON
+
+  export
+  text : Alternative m
+    => HasContentType h1
+    => (
+      Step me u h1 fn s h2 a b
+      -> m $ Step me' p' h1 fn' s' h2' a' b'
+    )
+    -> Step me u h1 fn s h2 a b
+    -> m $ Step me' p' h1 fn' s' h2' a' b'
+  text = contentType TEXT_PLAIN
+
+  export
+  binary : Alternative m
+    => HasContentType h1
+    => (
+      Step me u h1 fn s h2 a b
+      -> m $ Step me' p' h1 fn' s' h2' a' b'
+    )
+    -> Step me u h1 fn s h2 a b
+    -> m $ Step me' p' h1 fn' s' h2' a' b'
+  binary = contentType APPLICATION_OCTET_STREAM

@@ -1,5 +1,6 @@
 module TyTTP.HTTP.Combinators
 
+import Control.Monad.Trans
 import Data.Buffer
 import Data.Buffer.Ext
 import Data.Maybe
@@ -15,11 +16,11 @@ hToPublisher : Applicative m
   -> { auto methodProof : me = step.request.method }
   -> ( step : Step Method h1 u (TyTTP.HTTP.bodyOf {error = e, monad = m}) s h2 a ((TyTTP.HTTP.bodyOf {error = e, monad = m}) me a) )
   -> m $ Step Method h1 u (TyTTP.HTTP.bodyOf {error = e} {monad = m}) s h2 a (Publisher m e a)
-hToPublisher = \s =>
-  let originalPublisher : Lazy (Publisher m e a) = believe_me $ Response.body $ s.response
+hToPublisher step =
+  let originalPublisher : Lazy (Publisher m e a) = believe_me $ Response.body $ step.response
       publisher : Publisher m e a = selectBodyByMethod me empty originalPublisher
   in
-    pure $ record { response.body = publisher } s
+    pure $ record { response.body = publisher } step
 
 export
 consumeBody : HasIO m
@@ -45,3 +46,12 @@ consumeBody handler step = MkPromise $ \cont => do
       withoutBody : Lazy (m ()) = empty.subscribe subscriber
   selectBodyByMethod step.request.method withoutBody withBody
 
+export
+asPromise : Monad m
+  => (
+    Step me u h1 fn s h2 a b
+    -> m $ Step me' u' h1' fn' s' h2' a' b'
+  )
+  -> Step me u h1 fn s h2 a b
+  -> Promise e m $ Step me' u' h1' fn' s' h2' a' b'
+asPromise handler step = lift $ handler step

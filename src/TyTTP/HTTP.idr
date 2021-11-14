@@ -1,5 +1,6 @@
 module TyTTP.HTTP
 
+import Data.List
 import public TyTTP
 
 public export
@@ -70,6 +71,15 @@ selectBodyByMethod m withoutBody withBody = case m of
 public export
 StringHeaders : Type
 StringHeaders = List (String, String)
+
+public export
+interface HasContentType a where
+  getContentType : a -> Maybe String
+
+export
+implementation HasContentType StringHeaders where
+  getContentType headers = lookup "content-type" headers
+
 
 public export
 bodyOf : { monad : Type -> Type } -> { error : Type } -> Method -> Type -> Type

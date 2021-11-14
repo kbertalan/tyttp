@@ -14,12 +14,13 @@ import TyTTP.Adapter.Node.HTTP
 import TyTTP.Adapter.Node.Static
 import TyTTP.Adapter.Node.URI
 import TyTTP.HTTP
+import TyTTP.HTTP.Combinators
 import TyTTP.HTTP.Routing
 import TyTTP.URL
 import TyTTP.URL.Path
 import TyTTP.URL.Search
 
-sendError : Status -> String -> StaticRequest a -> IO $ StaticResponse a
+sendError : HasIO io => Status -> String -> StaticRequest a -> io $ StaticResponse a
 sendError status str step = do
   let buffer = fromString str
       publisher : Publisher IO NodeError Buffer = singleton buffer
@@ -35,7 +36,7 @@ sendError status str step = do
     , response.body = publisher
     } step
 
-staticFileError : FileServingError -> StaticRequest u -> IO $ StaticResponse u
+staticFileError : HasIO io => FileServingError -> StaticRequest u -> io $ StaticResponse u
 staticFileError code step = case code of
   StatError e => sendError INTERNAL_SERVER_ERROR ("File error: " <+> e.message) step
   NotAFile s => sendError NOT_FOUND ("Could not found file: " <+> s) step
@@ -55,17 +56,32 @@ hQuery toString step = do
          , response.status := OK
          } step
 
-hRouting : String -> StaticRequest String -> IO $ StaticResponse String
+hReturnRequestBody : HasIO m
+  => Step me u h1 Request.simpleBody s h2 Buffer ()
+  -> m $ Step me u h1 Request.simpleBody Status StringHeaders Buffer (Publisher IO NodeError Buffer)
+hReturnRequestBody step = do
+  let payload = step.request.body
+      stream : Publisher IO NodeError Buffer = Stream.singleton payload
+  size <- rawSize payload
+  pure $ { response.body := stream
+         , response.headers := 
+           [ ("Content-Type", "text/plain")
+           , ("Content-Length", show size)
+           ]
+         , response.status := OK
+         } step
+
+hRouting : String -> StaticRequest String -> Promise NodeError IO $ StaticResponse String
 hRouting folder =
     let routingError = sendError NOT_FOUND "Resource could not be found"
         urlError = \err => sendError BAD_REQUEST "URL has invalid format"
         uriError = sendError BAD_REQUEST "URI decode has failed"
     in
       uri' uriError :> url' urlError :> routes' routingError
-          [ get $ pattern "/static/*" :> hStatic folder staticFileError 
-          , post :> sendError INTERNAL_SERVER_ERROR "This is just an example"
-          , get $ pattern "/query" :> hQuery id
-          , get $ pattern "/parsed" :> Simple.search $ hQuery show
+          [ get $ pattern "/static/*" :> hStatic folder staticFileError
+          , get $ pattern "/query" :> \s => lift $ hQuery id s
+          , get $ pattern "/parsed" :> Simple.search :> hQuery show
+          , post $ pattern "/json" $ json :> consumeBody $ hReturnRequestBody
           ]
 
 main : IO ()
@@ -76,5 +92,5 @@ main = eitherT putStrLn pure $ do
   putStrLn "Starting static server in folder: \{folder}"
 
   http <- HTTP.require
-  ignore $ HTTP.listen :> hRouting folder
+  ignore $ HTTP.listen $ hRouting folder
 
