@@ -8,14 +8,14 @@ import TyTTP
 import TyTTP.HTTP as HTTP
 
 public export
-RawHttpRequest : { auto monad : Type -> Type } -> { auto error : Type } -> Type
-RawHttpRequest = HttpRequest { monad } { error } String StringHeaders Buffer
+RawHttpRequest : Type
+RawHttpRequest = HttpRequest { monad = IO, error = NodeError } String StringHeaders Buffer
 
 public export
-RawHttpResponse : { auto monad : Type -> Type } -> { auto error : Type } -> Type
-RawHttpResponse = Response Status StringHeaders $ Publisher monad error Buffer
+RawHttpResponse : Type
+RawHttpResponse = Response Status StringHeaders $ Publisher IO NodeError Buffer
 
-toNodeResponse : Error e => RawHttpResponse { monad = IO } { error = e } -> Node.HTTP.Server.ServerResponse -> IO ()
+toNodeResponse : RawHttpResponse -> Node.HTTP.Server.ServerResponse -> IO ()
 toNodeResponse res nodeRes = do
   let status = res.status.code
   headers <- mapHeaders res.headers
@@ -46,7 +46,7 @@ fromPromiseToNodeResponse (MkPromise cont) nodeRes =
   in
     cont callbacks
 
-fromNodeRequest : Node.HTTP.Server.IncomingMessage -> RawHttpRequest { monad = IO } { error = NodeError }
+fromNodeRequest : Node.HTTP.Server.IncomingMessage -> RawHttpRequest
 fromNodeRequest nodeReq =
   let method = parseMethod nodeReq.method
       path = nodeReq.url
