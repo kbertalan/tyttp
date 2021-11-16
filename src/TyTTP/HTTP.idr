@@ -94,7 +94,7 @@ mkRequest : { monad : Type -> Type } -> { error : Type } -> (m : Method) -> p ->
 mkRequest m p h a = MkRequest m p h a
 
 export
-mkRequestBody : { monad : Type -> Type } -> { error : Type } -> (m : Method) -> Lazy (Publisher monad error b) -> bodyOf {monad} {error} m b
+mkRequestBody : {0 monad : Type -> Type } -> {0 error : Type } -> (m : Method) -> Lazy (Publisher monad error b) -> bodyOf {monad} {error} m b
 mkRequestBody m x = case m of
   OPTIONS => ()
   GET => ()

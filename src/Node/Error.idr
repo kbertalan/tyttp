@@ -579,31 +579,21 @@ fromString str = case str of
     "ETIMEDOUT" => SystemError ETIMEDOUT
     a => OtherCode a
 
-public export
-interface Error e where
-  (.message) : e -> String
-  (.stack) : e -> String
-  (.code) : e -> Code
-
-%foreign "node:lambda: (ty, e) => e.message"
-message : e -> String
-
-%foreign "node:lambda: (ty, e) => e.stack"
-stack : e -> String
-
-%foreign "node:lambda: (ty, e) => e.code"
-ffi_code : e -> String
-
-code : e -> Code
-code = fromString . ffi_code
-
 export
 data NodeError : Type where [external]
 
 export
-Error NodeError where
-  (.message) = message
-  (.stack) = stack
-  (.code) = code
+%foreign "node:lambda: e => e.message"
+message : NodeError -> String
 
+export
+%foreign "node:lambda: e => e.stack"
+stack : NodeError -> String
+
+%foreign "node:lambda: e => e.code"
+ffi_code : NodeError -> String
+
+export
+code : NodeError -> Code
+code = fromString . ffi_code
 

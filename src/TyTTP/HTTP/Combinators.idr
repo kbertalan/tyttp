@@ -23,9 +23,9 @@ hToPublisher step =
     pure $ record { response.body = publisher } step
 
 export
-consumeBody : HasIO m
-  => { e : Type } 
-  -> (
+consumeBody : Error e
+  => HasIO m
+  => (
     Step Method u h1 Request.simpleBody s h2 Buffer b
     -> m $ Step Method u' h1' Request.simpleBody s' h2' Buffer b'
   )
@@ -46,12 +46,3 @@ consumeBody handler step = MkPromise $ \cont => do
       withoutBody : Lazy (m ()) = empty.subscribe subscriber
   selectBodyByMethod step.request.method withoutBody withBody
 
-export
-asPromise : Monad m
-  => (
-    Step me u h1 fn s h2 a b
-    -> m $ Step me' u' h1' fn' s' h2' a' b'
-  )
-  -> Step me u h1 fn s h2 a b
-  -> Promise e m $ Step me' u' h1' fn' s' h2' a' b'
-asPromise handler step = lift $ handler step

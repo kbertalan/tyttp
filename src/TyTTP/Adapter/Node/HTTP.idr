@@ -2,9 +2,10 @@ module TyTTP.Adapter.Node.HTTP
 
 import Data.Buffer
 import Node
-import Node.Error
+import public Node.Error
 import Node.HTTP.Server
 import TyTTP
+import public TyTTP.Adapter.Node.Error
 import TyTTP.HTTP as HTTP
 
 public export
@@ -31,16 +32,16 @@ toNodeResponse res nodeRes = do
       newHeaders <- empty
       foldlM (\hs, (k,v) => hs.setHeader k v) newHeaders h
 
-fromPromiseToNodeResponse : Promise NodeError IO (Step Method String StringHeaders f Status StringHeaders b $ Publisher IO NodeError Buffer) -> ServerResponse -> IO ()
+fromPromiseToNodeResponse : Error e => Promise e IO (Step Method String StringHeaders f Status StringHeaders b $ Publisher IO NodeError Buffer) -> ServerResponse -> IO ()
 fromPromiseToNodeResponse (MkPromise cont) nodeRes =
   let callbacks = MkCallbacks
         { onSucceded = \a => toNodeResponse a.response nodeRes }
         { onFailed = \e => do
             h1 <- empty
             h2 <- h1.setHeader "Content-Type" "plain/text"
-            headers <- h2.setHeader "Content-Length" $ show $ length e.message
+            headers <- h2.setHeader "Content-Length" $ show $ length $ message e
             nodeRes.writeHead ((.code) INTERNAL_SERVER_ERROR) headers
-            nodeRes.write e.message
+            nodeRes.write $ message e
             nodeRes.end
         }
   in
@@ -58,11 +59,12 @@ fromNodeRequest nodeReq =
 
 export
 listen : HasIO io
+   => Error e
    => { auto http : HTTP }
    -> { default 3000 port : Int }
    -> ( 
     Step Method String StringHeaders (HTTP.bodyOf { monad = IO } {error = NodeError}) Status StringHeaders Buffer ()
-     -> Promise NodeError IO $ Step Method String StringHeaders f Status StringHeaders b (Publisher IO NodeError Buffer)
+     -> Promise e IO $ Step Method String StringHeaders f Status StringHeaders b (Publisher IO NodeError Buffer)
   )
    -> io Server
 listen {http} {port} handler = do

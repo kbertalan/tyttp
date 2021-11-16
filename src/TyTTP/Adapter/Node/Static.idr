@@ -9,6 +9,7 @@ import Node.Error
 import Node.FS
 import Node.FS.Stats
 import Node.FS.Stream
+import TyTTP.Adapter.Node.Error
 import TyTTP.Adapter.Node.HTTP
 import TyTTP.HTTP
 import TyTTP.URL
@@ -19,40 +20,41 @@ Resource : Type
 Resource = String
 
 public export
-data FileServingError
-  = StatError NodeError
-  | NotAFile Resource
+data FileServingError : Type where
+  StatError : Error e => e -> FileServingError
+  NotAFile : Resource -> FileServingError
 
 public export
-StaticRequest : Type -> Type
-StaticRequest url = Step Method url StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer ()
+StaticRequest : (e : Type) -> Type -> Type
+StaticRequest e url = Step Method url StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = e }) Status StringHeaders Buffer ()
 
 public export
-StaticResponse : Type -> Type
-StaticResponse url = Step Method url StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
+StaticResponse : (e : Type) -> Type -> Type
+StaticResponse e url = Step Method url StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = e }) Status StringHeaders Buffer (Publisher IO e Buffer)
 
-record StaticSuccesResult where
+record StaticSuccesResult (e : Type) where
   constructor MkStaticSuccessResult
   size : Int
-  stream : Publisher IO NodeError Buffer
+  stream : Publisher IO e Buffer
   mime : Mime
 
 export
-hStatic : HasIO io
+hStatic : Error e
+  => HasIO io
   => (folder : String)
   -> (returnError : FileServingError
-    -> StaticRequest (URL a Path s)
-    -> io $ StaticResponse (URL a Path s)
+    -> StaticRequest e (URL a Path s)
+    -> io $ StaticResponse e (URL a Path s)
   )
-  -> (step : StaticRequest (URL a Path s))
-  -> io $ StaticResponse (URL a Path s)
+  -> (step : StaticRequest e (URL a Path s))
+  -> io $ StaticResponse e (URL a Path s)
 hStatic folder returnError step = eitherT (flip returnError step) returnSuccess $ do
     let resource = step.request.url.path.rest
         file = "\{folder}\{resource}"
 
     fs <- FS.require
     Right stats <- stat_sync StatsInt file
-      | Left e => throwError $ case e.code of
+      | Left e => throwError $ case code e of
          SystemError ENOENT => NotAFile resource
          _ => StatError e
 
@@ -74,14 +76,14 @@ hStatic folder returnError step = eitherT (flip returnError step) returnSuccess 
             }
 
   where
-    returnSuccess : StaticSuccesResult -> io $ StaticResponse (URL a Path s)
+    returnSuccess : Error e => StaticSuccesResult e -> io $ StaticResponse e (URL a Path s)
     returnSuccess result = do
       let hs = [ ("Content-Length", show $ result.size)
                , ("Content-Type", show $ result.mime)
                ]
       pure $ { response.status := OK
              , response.headers := hs
-             , response.body := result.stream } step
+             , response.body := result.stream } step 
 
     extensionOf' : (ext: List Char) -> (file: List Char) -> (dot: Bool) -> Maybe (List Char)
     extensionOf' ext ('.' :: xs) _ = extensionOf' xs xs True

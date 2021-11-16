@@ -5,7 +5,6 @@ import Data.List
 import Control.Monad.Either
 import Control.Monad.Maybe
 import Control.Monad.Trans
-import Node.Error
 import Node.Buffer
 import Node.HTTP.Server
 import System
@@ -20,10 +19,10 @@ import TyTTP.URL
 import TyTTP.URL.Path
 import TyTTP.URL.Search
 
-sendError : HasIO io => Status -> String -> StaticRequest a -> io $ StaticResponse a
+sendError : Error e => HasIO io => Status -> String -> StaticRequest e u -> io $ StaticResponse e u 
 sendError status str step = do
   let buffer = fromString str
-      publisher : Publisher IO NodeError Buffer = singleton buffer
+      publisher : Publisher IO e Buffer = singleton buffer
 
   size <- rawSize buffer
 
@@ -36,18 +35,19 @@ sendError status str step = do
     , response.body = publisher
     } step
 
-staticFileError : HasIO io => FileServingError -> StaticRequest u -> io $ StaticResponse u
+staticFileError : Error e => HasIO io => FileServingError -> StaticRequest e u -> io $ StaticResponse e u
 staticFileError code step = case code of
-  StatError e => sendError INTERNAL_SERVER_ERROR ("File error: " <+> e.message) step
+  StatError e => sendError INTERNAL_SERVER_ERROR ("File error: " <+> message e) step
   NotAFile s => sendError NOT_FOUND ("Could not found file: " <+> s) step
 
-hQuery : Applicative m
+hQuery : Error e
+  => Applicative m
   => (src -> String)
   -> Step me (URL auth pth src) h1 fn s h2 a ()
-  -> m $ Step me (URL auth pth src) h1 fn Status StringHeaders a (Publisher IO NodeError Buffer)
+  -> m $ Step me (URL auth pth src) h1 fn Status StringHeaders a (Publisher IO e Buffer)
 hQuery toString step = do
   let query = toString step.request.url.search
-      stream : Publisher IO NodeError Buffer = Stream.singleton $ fromString query
+      stream : Publisher IO e Buffer = Stream.singleton $ fromString query
   pure $ { response.body := stream
          , response.headers := 
            [ ("Content-Type", "text/plain")
@@ -56,12 +56,13 @@ hQuery toString step = do
          , response.status := OK
          } step
 
-hReturnRequestBody : HasIO m
+hReturnRequestBody : Error e
+  => HasIO m
   => Step me u h1 Request.simpleBody s h2 Buffer ()
-  -> m $ Step me u h1 Request.simpleBody Status StringHeaders Buffer (Publisher IO NodeError Buffer)
+  -> m $ Step me u h1 Request.simpleBody Status StringHeaders Buffer (Publisher IO e Buffer)
 hReturnRequestBody step = do
   let payload = step.request.body
-      stream : Publisher IO NodeError Buffer = Stream.singleton payload
+      stream : Publisher IO e Buffer = Stream.singleton payload
   size <- rawSize payload
   pure $ { response.body := stream
          , response.headers := 
@@ -71,7 +72,10 @@ hReturnRequestBody step = do
          , response.status := OK
          } step
 
-hRouting : String -> StaticRequest String -> Promise NodeError IO $ StaticResponse String
+hRouting : Error e
+  => String
+  -> StaticRequest e String
+  -> Promise e IO $ StaticResponse e String
 hRouting folder =
     let routingError = sendError NOT_FOUND "Resource could not be found"
         urlError = \err => sendError BAD_REQUEST "URL has invalid format"

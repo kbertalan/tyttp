@@ -1,9 +1,11 @@
 package tyttp
 
 modules = TyTTP
+  , TyTTP.Adapter.Node.Error
   , TyTTP.Adapter.Node.HTTP
   , TyTTP.Adapter.Node.Static
   , TyTTP.Adapter.Node.URI
+  , TyTTP.Core.Error
   , TyTTP.Core.Promise
   , TyTTP.Core.Request
   , TyTTP.Core.Response
