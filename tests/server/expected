@@ -1,4 +1,4 @@
-1/1: Building Server (./Server.idr)
+1/1: Building Server (Server.idr)
 GET
 200
 method -> GET

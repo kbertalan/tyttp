@@ -1,6 +1,6 @@
 rm -rf build
 
 $1 --build test.ipkg
-node build/exec/test
+[ -f build/exec/test ] && node build/exec/test
 
 

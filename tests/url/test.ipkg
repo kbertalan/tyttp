@@ -3,6 +3,5 @@ package test
 depends = tyttp
 modules = Url
 main = Url
-sourcedir = "."
 executable = test
 opts = "--no-color --console-width 0"

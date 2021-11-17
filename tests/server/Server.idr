@@ -4,10 +4,10 @@ import Control.Monad.Trans
 import Data.Buffer
 import Node
 import Node.Buffer
-import Node.Error
 import Node.HTTP.Client
 import Node.HTTP.Server
 import TyTTP.Adapter.Node.HTTP as HTTP
+import TyTTP.Core.Error
 import TyTTP.HTTP
 import TyTTP.HTTP.Combinators
 import TyTTP.Support.Combinators
@@ -17,7 +17,7 @@ hReflect : Step Method String StringHeaders (HTTP.bodyOf { monad = IO } { error 
 hReflect step = do
   let m = step.request.method
       h = step.request.headers
-      p = MkPublisher { m = IO } { e = NodeError } { a = Buffer } $ \s => do
+      p = MkPublisher $ \s => do
         s.onNext $ fromString "method -> \{show m}"
         s.onNext $ fromString "url -> \{step.request.url}"
         s.onNext "headers ->"
@@ -25,12 +25,12 @@ hReflect step = do
         s.onNext "body ->"
         selectBodyByMethod m (s.onNext "empty" >>= s.onSucceded) $
           (believe_me step.request.body).subscribe s
-  hConstResponse { m = IO } p step
+  hConstResponse p step
 
 main : IO ()
 main = do
   http <- require
-  server <- HTTP.listen $ \s => lift $ hReflect s
+  server <- HTTP.listen { e = NodeError } :> hReflect
 
   defer $ do
     ignore $ http.get "http://localhost:3000" $ \res => do

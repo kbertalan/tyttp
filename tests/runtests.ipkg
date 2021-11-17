@@ -2,7 +2,5 @@ package runtests
 
 depends = contrib, test
 
-sourcedir = "."
-
 main = Main
 executable=runtests
