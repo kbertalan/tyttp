@@ -30,7 +30,7 @@ hReflect step = do
 main : IO ()
 main = do
   http <- require
-  server <- HTTP.listen { e = NodeError } :> hReflect
+  server <- HTTP.listen' { e = NodeError } :> hReflect
 
   defer $ do
     ignore $ http.get "http://localhost:3000" $ \res => do

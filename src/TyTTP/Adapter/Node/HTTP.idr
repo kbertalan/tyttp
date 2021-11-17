@@ -1,7 +1,7 @@
 module TyTTP.Adapter.Node.HTTP
 
 import Data.Buffer
-import Node
+import Node.Buffer
 import public Node.Error
 import Node.HTTP.Server
 import TyTTP
@@ -32,18 +32,15 @@ toNodeResponse res nodeRes = do
       newHeaders <- empty
       foldlM (\hs, (k,v) => hs.setHeader k v) newHeaders h
 
-fromPromiseToNodeResponse : Error e => Promise e IO (Step Method String StringHeaders f Status StringHeaders b $ Publisher IO NodeError Buffer) -> ServerResponse -> IO ()
-fromPromiseToNodeResponse (MkPromise cont) nodeRes =
+fromPromiseToNodeResponse : Error e
+  => (e -> RawHttpResponse)
+  -> Promise e IO (Step Method String StringHeaders f Status StringHeaders b $ Publisher IO NodeError Buffer)
+  -> ServerResponse
+  -> IO ()
+fromPromiseToNodeResponse errorHandler (MkPromise cont) nodeRes =
   let callbacks = MkCallbacks
         { onSucceded = \a => toNodeResponse a.response nodeRes }
-        { onFailed = \e => do
-            h1 <- empty
-            h2 <- h1.setHeader "Content-Type" "plain/text"
-            headers <- h2.setHeader "Content-Length" $ show $ length $ message e
-            nodeRes.writeHead ((.code) INTERNAL_SERVER_ERROR) headers
-            nodeRes.write $ message e
-            nodeRes.end
-        }
+        { onFailed = \e => toNodeResponse (errorHandler e) nodeRes }
   in
     cont callbacks
 
@@ -57,17 +54,37 @@ fromNodeRequest nodeReq =
         nodeReq.onError s.onFailed
         nodeReq.onEnd s.onSucceded
 
+public export
+record ListenOptions e where
+  constructor MkListenOptions
+  port : Int
+  errorHandler : (e -> RawHttpResponse)
+
+export
+defaultListenOptions : Error e => ListenOptions e
+defaultListenOptions = MkListenOptions
+  { port = 3000
+  , errorHandler = \e => MkResponse
+    { status = INTERNAL_SERVER_ERROR
+    , headers =
+      [ ("Content-Type", "text/plain")
+      , ("Content-Length", show $ length $ message e)
+      ]
+    , body = singleton $ fromString $ message e
+    }
+  }
+
 export
 listen : HasIO io
    => Error e
-   => { auto http : HTTP }
-   -> { default 3000 port : Int }
+   => HTTP
+   -> ListenOptions e
    -> ( 
     Step Method String StringHeaders (HTTP.bodyOf { monad = IO } {error = NodeError}) Status StringHeaders Buffer ()
      -> Promise e IO $ Step Method String StringHeaders f Status StringHeaders b (Publisher IO NodeError Buffer)
   )
    -> io Server
-listen {http} {port} handler = do
+listen http options handler = do
   server <- http.createServer
 
   server.onRequest $ \req => \res => do
@@ -75,8 +92,19 @@ listen {http} {port} handler = do
         initialRes = MkResponse OK [] () {h = StringHeaders}
         result = handler $ MkStep handlerReq initialRes
 
-    fromPromiseToNodeResponse result res
+    fromPromiseToNodeResponse options.errorHandler result res
 
-  server.listen port
+  server.listen options.port
   pure server
 
+export
+listen' : HasIO io
+   => Error e
+   => { auto http : HTTP }
+   -> { default defaultListenOptions options : ListenOptions e }
+   -> ( 
+    Step Method String StringHeaders (HTTP.bodyOf { monad = IO } {error = NodeError}) Status StringHeaders Buffer ()
+     -> Promise e IO $ Step Method String StringHeaders f Status StringHeaders b (Publisher IO NodeError Buffer)
+  )
+   -> io Server
+listen' {http} {options} handler = listen http options handler
