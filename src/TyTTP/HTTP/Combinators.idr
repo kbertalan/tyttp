@@ -27,10 +27,10 @@ consumeBody : Error e
   => HasIO m
   => (
     Step Method u h1 Request.simpleBody s h2 Buffer b
-    -> m $ Step Method u' h1' Request.simpleBody s' h2' Buffer b'
+    -> m $ Step Method u' h1' Request.simpleBody s' h2' a' b'
   )
   -> Step Method u h1 (HTTP.bodyOf {monad = IO, error = e}) s h2 Buffer b
-  -> Promise e m $ Step Method u' h1' (HTTP.bodyOf {monad = IO, error = e}) s' h2' Buffer b'
+  -> Promise e m $ Step Method u' h1' (HTTP.bodyOf {monad = IO, error = e}) s' h2' a' b'
 consumeBody handler step = MkPromise $ \cont => do
   acc <- newIORef Lin
   let subscriber : Subscriber m e Buffer = MkSubscriber

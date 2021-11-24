@@ -15,7 +15,7 @@ clean:
 	rm -rf build
 
 repl:
-	rlwrap $(idris2) --repl $(package)
+	rlwrap $(idris2) --repl $(package) --codegen $(codegen)
 
 run: build
 	bash -c 'time node build/exec/$(executable) src/'

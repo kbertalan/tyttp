@@ -18,7 +18,8 @@ export
 Bifunctor (Step me u h1 Request.simpleBody s h2) where
   bimap f g step = record { request $= map f, response $= map g } step
 
-infixr 0 :>
+infixr 0 :>, :>>
+
 export
 (:>) : MonadTrans t
   => Monad m
@@ -27,3 +28,12 @@ export
   -> c
 (:>) f handler = f $ \a => lift $ handler a
 
+export
+(:>>) : MonadTrans t1
+  => MonadTrans t2
+  => Monad m
+  => Monad (t1 m)
+  => (f : (a -> (t2 (t1 m)) b) -> c)
+  -> (handler : a -> m b)
+  -> c
+(:>>) f handler = f $ \a => lift $ lift $ handler a

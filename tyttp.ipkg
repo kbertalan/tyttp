@@ -13,6 +13,8 @@ modules = TyTTP
   , TyTTP.Core.Stream
   , TyTTP.HTTP
   , TyTTP.HTTP.Combinators
+  , TyTTP.HTTP.Consumer
+  , TyTTP.HTTP.Consumer.JSON
   , TyTTP.HTTP.Routing
   , TyTTP.Support.Combinators
   , TyTTP.Support.Routing
@@ -31,7 +33,12 @@ modules = TyTTP
   , Node.URI
   , Data.Buffer.Ext
 
-depends = base, apache-mime-types
+depends = base
+  , apache-mime-types
+  , contrib
+  , sop
+  , elab-util
+  , json
 
 sourcedir = "src"
 
