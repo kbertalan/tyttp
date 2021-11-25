@@ -58,7 +58,7 @@ safeConsume :
 safeConsume [] _ _ _ _ _ = empty
 safeConsume (t::ts) (ItIsAccept::as) (c::cs) ct handler step =
   if elem ct (contentType t)
-  then lift $ flip consumeBody step $ \s => do
+  then lift $ flip unsafeConsumeBody step $ \s => do
           let raw = s.request.body
           result <- handler $ { request.body := consumeOne t c ct raw } s
           pure $ { request.body := raw } result

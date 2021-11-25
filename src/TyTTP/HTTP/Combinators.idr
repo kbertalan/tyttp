@@ -22,8 +22,10 @@ hToPublisher step =
   in
     pure $ record { response.body = publisher } step
 
+||| This function consumes the stream from the underlying server, thus the original stream cannot be used twice.
+||| If you make sure that the original stream is not used twice, then this function can be used.
 export
-consumeBody : Error e
+unsafeConsumeBody : Error e
   => HasIO m
   => (
     Step Method u h1 Request.simpleBody s h2 Buffer b
@@ -31,7 +33,7 @@ consumeBody : Error e
   )
   -> Step Method u h1 (HTTP.bodyOf {monad = IO, error = e}) s h2 Buffer b
   -> Promise e m $ Step Method u' h1' (HTTP.bodyOf {monad = IO, error = e}) s' h2' a' b'
-consumeBody handler step = MkPromise $ \cont => do
+unsafeConsumeBody handler step = MkPromise $ \cont => do
   acc <- newIORef Lin
   let subscriber : Subscriber m e Buffer = MkSubscriber
         { onNext = \a => modifyIORef acc (:< a)
