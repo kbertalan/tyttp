@@ -1,7 +1,7 @@
 module TyTTP.Adapter.Node.HTTP
 
 import Data.Buffer
-import Node.Buffer
+import Data.Buffer.Ext
 import public Node.Error
 import Node.HTTP.Server
 import TyTTP

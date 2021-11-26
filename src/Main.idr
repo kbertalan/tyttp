@@ -1,6 +1,7 @@
 module Main
 
 import Data.Buffer
+import Data.Buffer.Ext
 import Data.List
 import Data.List.Quantifiers
 import Control.Monad.Either
@@ -8,7 +9,6 @@ import Control.Monad.Maybe
 import Control.Monad.Trans
 import Generics.Derive
 import JSON
-import Node.Buffer
 import Node.HTTP.Server
 import System
 import System.Directory

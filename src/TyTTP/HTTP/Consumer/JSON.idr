@@ -1,10 +1,10 @@
 module TyTTP.HTTP.Consumer.JSON
 
 import Data.Buffer
+import Data.Buffer.Ext
 import Data.Mime.Apache
 import JSON
 import Language.JSON as LJ
-import Node.Buffer
 import TyTTP.HTTP.Consumer
 
 %hide Language.JSON.Data.JSON
@@ -19,4 +19,4 @@ implementation Accept JSON where
 export
 implementation FromJSON a => Consumer a JSON where
   consumeRaw _ ct raw = 
-    mapFst show $ decode $ toStringUTF8 raw
+    mapFst show $ decode $ show raw

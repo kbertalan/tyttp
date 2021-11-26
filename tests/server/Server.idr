@@ -2,8 +2,8 @@ module Server
 
 import Control.Monad.Trans
 import Data.Buffer
+import Data.Buffer.Ext
 import Node
-import Node.Buffer
 import Node.HTTP.Client
 import Node.HTTP.Server
 import TyTTP.Adapter.Node.HTTP as HTTP

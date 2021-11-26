@@ -22,7 +22,6 @@ modules = TyTTP
   , TyTTP.URL.Path
   , TyTTP.URL.Search
   , Node
-  , Node.Buffer
   , Node.Error
   , Node.FS
   , Node.FS.Stats
