@@ -33,11 +33,11 @@ unsafeConsumeBody : Error e
   )
   -> Step Method u h1 (HTTP.bodyOf {monad = IO, error = e}) s h2 Buffer b
   -> Promise e m $ Step Method u' h1' (HTTP.bodyOf {monad = IO, error = e}) s' h2' a' b'
-unsafeConsumeBody handler step = MkPromise $ \cont => do
+unsafeConsumeBody handler step = MkPromise $ \cb => do
   acc <- newIORef Lin
   let handlerCallbacks = MkCallbacks
-        { onSucceded = \r => cont.onSucceded $ { request.body := mkRequestBody r.request.method $ singleton r.request.body } r
-        , onFailed = \e => cont.onFailed e
+        { onSucceded = \r => cb.onSucceded $ { request.body := mkRequestBody r.request.method $ singleton r.request.body } r
+        , onFailed = cb.onFailed
         }
       subscriber : Subscriber m e Buffer = MkSubscriber
         { onNext = \a => modifyIORef acc (:< a)
@@ -46,7 +46,7 @@ unsafeConsumeBody handler step = MkPromise $ \cont => do
             emptyBuffer <- Ext.newBuffer 0
             let result = handler $ { request.body := fromMaybe emptyBuffer all } step
             result.continuation handlerCallbacks
-        , onFailed = cont.onFailed
+        , onFailed = cb.onFailed
         }
       withBody : Lazy (m ()) = (believe_me step.request.body).subscribe subscriber
       withoutBody : Lazy (m ()) = empty.subscribe subscriber

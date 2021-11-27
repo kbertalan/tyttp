@@ -29,13 +29,13 @@ public export
 data IsConsumer : (a : Type) -> (t : Type) -> Type where
   ItIsConsumer : Consumer a t => IsConsumer a t
 
-consumeOne :
+consumePayload :
   (t : Type)
   -> (isConsumer : IsConsumer a t)
   -> (ct : String)
   -> (raw : Buffer)
   -> Either ConsumerError a
-consumeOne t ItIsConsumer ct raw =
+consumePayload t ItIsConsumer ct raw =
   consumeRaw t ct raw
 
 safeConsume :
@@ -58,12 +58,12 @@ safeConsume :
 safeConsume [] _ _ _ _ _ = empty
 safeConsume (t::ts) (ItIsAccept::as) (c::cs) ct handler step =
   if elem ct (contentType t)
-  then lift $ flip unsafeConsumeBody step $ \s => MkPromise $ \cont => do
+  then lift $ flip unsafeConsumeBody step $ \s => MkPromise $ \cb => do
           let raw = s.request.body
-              result = handler $ { request.body := consumeOne t c ct raw } s
+              result = handler $ { request.body := consumePayload t c ct raw } s
           result.continuation $ MkCallbacks
-            { onSucceded = \r => cont.onSucceded $ { request.body := raw } r
-            , onFailed = \err => cont.onFailed err }
+            { onSucceded = \r => cb.onSucceded $ { request.body := raw } r
+            , onFailed = \err => cb.onFailed err }
   else safeConsume ts as cs ct handler step
 
 export

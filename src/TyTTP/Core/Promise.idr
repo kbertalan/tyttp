@@ -21,22 +21,27 @@ mutual
 
   export
   Applicative (Promise e m) where
-    pure a = MkPromise $ \cont => cont.onSucceded a
+    pure a = MkPromise $ \cb => cb.onSucceded a
     fn <*> pa = fn >>= \f => map f pa
 
   export
   Monad (Promise e m) where
-    (>>=) (MkPromise conta) f = MkPromise $ \cbb => conta $ MkCallbacks
+    (>>=) (MkPromise conta) f = MkPromise $ \cb => conta $ MkCallbacks
         { onSucceded = \a =>
             let MkPromise contb = f a
-            in contb cbb
+            in contb cb
+        , onFailed = cb.onFailed
         }
-        { onFailed = cbb.onFailed }
 
 export
 MonadTrans (Promise e) where
-  lift ma = MkPromise $ \cont => ma >>= cont.onSucceded
+  lift ma = MkPromise $ \cb => ma >>= cb.onSucceded
 
 export
 HasIO m => HasIO (Promise e m) where
   liftIO = lift . liftIO
+
+export
+fail : e -> Promise e m a
+fail e = MkPromise $ \cb => cb.onFailed e
+
