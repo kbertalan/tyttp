@@ -29,19 +29,23 @@ unsafeConsumeBody : Error e
   => HasIO m
   => (
     Step Method u h1 Request.simpleBody s h2 Buffer b
-    -> m $ Step Method u' h1' Request.simpleBody s' h2' a' b'
+    -> Promise e m $ Step Method u' h1' Request.simpleBody s' h2' a' b'
   )
   -> Step Method u h1 (HTTP.bodyOf {monad = IO, error = e}) s h2 Buffer b
   -> Promise e m $ Step Method u' h1' (HTTP.bodyOf {monad = IO, error = e}) s' h2' a' b'
 unsafeConsumeBody handler step = MkPromise $ \cont => do
   acc <- newIORef Lin
-  let subscriber : Subscriber m e Buffer = MkSubscriber
+  let handlerCallbacks = MkCallbacks
+        { onSucceded = \r => cont.onSucceded $ { request.body := mkRequestBody r.request.method $ singleton r.request.body } r
+        , onFailed = \e => cont.onFailed e
+        }
+      subscriber : Subscriber m e Buffer = MkSubscriber
         { onNext = \a => modifyIORef acc (:< a)
         , onSucceded = \_ => do
             all <- concatBuffers =<< asList <$> readIORef acc
             emptyBuffer <- Ext.newBuffer 0
-            result <- handler $ { request.body := fromMaybe emptyBuffer all } step
-            cont.onSucceded $ { request.body := mkRequestBody result.request.method $ singleton result.request.body } result
+            let result = handler $ { request.body := fromMaybe emptyBuffer all } step
+            result.continuation handlerCallbacks
         , onFailed = cont.onFailed
         }
       withBody : Lazy (m ()) = (believe_me step.request.body).subscribe subscriber

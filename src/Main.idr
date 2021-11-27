@@ -106,7 +106,7 @@ hRouting folder =
           [ get $ pattern "/static/*" :> hStatic folder staticFileError
           , get $ pattern "/query" :>> hQuery id
           , get $ pattern "/parsed" :> Simple.search :> hQuery show
-          , post $ pattern "/json" $ consumes' [JSON] parseError $ hReturnExample
+          , post $ pattern "/json" $ consumes' [JSON] parseError :> hReturnExample
           ]
 
 

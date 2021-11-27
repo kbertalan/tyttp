@@ -50,7 +50,7 @@ safeConsume :
   -> (ct : String)
   -> (
     Step Method u h1 Request.simpleBody s h2 (Either ConsumerError a) b
-    -> n $ Step Method u' h1' Request.simpleBody s' h2' a' b'
+    -> Promise e n $ Step Method u' h1' Request.simpleBody s' h2' a' b'
   )
   -> Step Method u h1 (HTTP.bodyOf {monad=IO, error=e}) s h2 Buffer b
   -> m (Promise e n) $
@@ -58,10 +58,12 @@ safeConsume :
 safeConsume [] _ _ _ _ _ = empty
 safeConsume (t::ts) (ItIsAccept::as) (c::cs) ct handler step =
   if elem ct (contentType t)
-  then lift $ flip unsafeConsumeBody step $ \s => do
+  then lift $ flip unsafeConsumeBody step $ \s => MkPromise $ \cont => do
           let raw = s.request.body
-          result <- handler $ { request.body := consumeOne t c ct raw } s
-          pure $ { request.body := raw } result
+              result = handler $ { request.body := consumeOne t c ct raw } s
+          result.continuation $ MkCallbacks
+            { onSucceded = \r => cont.onSucceded $ { request.body := raw } r
+            , onFailed = \err => cont.onFailed err }
   else safeConsume ts as cs ct handler step
 
 export
@@ -77,7 +79,7 @@ consumes :
   -> {auto areConsumers : All (IsConsumer a) list}
   -> (
     Step Method u h1 Request.simpleBody s h2 (Either ConsumerError a) b
-    -> n $ Step Method u' h1' Request.simpleBody s' h2' a' b'
+    -> Promise e n $ Step Method u' h1' Request.simpleBody s' h2' a' b'
   )
   -> Step Method u h1 (HTTP.bodyOf {monad=IO, error=e}) s h2 Buffer b
   -> m (Promise e n) $
@@ -101,11 +103,11 @@ consumes' :
   -> {auto areConsumers : All (IsConsumer a) list}
   -> (
     Step Method u h1 Request.simpleBody s h2 ConsumerError b
-    -> n $ Step Method u' h1' Request.simpleBody s' h2' a' b'
+    -> Promise e n $ Step Method u' h1' Request.simpleBody s' h2' a' b'
   )
   -> (
     Step Method u h1 Request.simpleBody s h2 a b
-    -> n $ Step Method u' h1' Request.simpleBody s' h2' a'' b'
+    -> Promise e n $ Step Method u' h1' Request.simpleBody s' h2' a'' b'
   )
   -> Step Method u h1 (HTTP.bodyOf {monad=IO, error=e}) s h2 Buffer b
   -> m (Promise e n) $
@@ -113,7 +115,7 @@ consumes' :
 consumes' list {isNonEmpty} {areAccepts} {areConsumers} errHandler handler step =
   let handler' : 
         Step Method u h1 Request.simpleBody s h2 (Either ConsumerError a) b
-        -> n $ Step Method u' h1' Request.simpleBody s' h2' () b'
+        -> Promise e n $ Step Method u' h1' Request.simpleBody s' h2' () b'
       handler' s =
         case s.request.body of
           Right r => do
