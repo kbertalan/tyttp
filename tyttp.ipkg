@@ -15,6 +15,7 @@ modules = TyTTP
   , TyTTP.HTTP.Combinators
   , TyTTP.HTTP.Consumer
   , TyTTP.HTTP.Consumer.JSON
+  , TyTTP.HTTP.Producer
   , TyTTP.HTTP.Routing
   , TyTTP.Support.Combinators
   , TyTTP.Support.Routing

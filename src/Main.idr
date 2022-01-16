@@ -19,6 +19,7 @@ import TyTTP.HTTP
 import TyTTP.HTTP.Combinators
 import TyTTP.HTTP.Consumer
 import TyTTP.HTTP.Consumer.JSON
+import TyTTP.HTTP.Producer
 import TyTTP.HTTP.Routing
 import TyTTP.URL
 import TyTTP.URL.Path
@@ -29,22 +30,10 @@ sendError :
   => HasIO io
   => Status
   -> String
-  -> Step me u h1 fn s h2 a b
+  -> Step me u h1 fn s StringHeaders a b
   -> io $ Step me u h1 fn Status StringHeaders a (Publisher IO e Buffer)
-sendError status str step = do
-  let buffer = fromString str
-      publisher : Publisher IO e Buffer = singleton buffer
-
-  size <- rawSize buffer
-
-  pure $
-    { response.headers := 
-      [ ("Content-Type", "text/plain")
-      , ("Content-Length", show size)
-      ]
-    , response.status := status
-    , response.body := publisher
-    } step
+sendError st str step = do
+  text str step >>= status st
 
 staticFileError : Error e => HasIO io => FileServingError -> StaticRequest e u -> io $ StaticResponse e u
 staticFileError code step = case code of
@@ -52,20 +41,13 @@ staticFileError code step = case code of
   NotAFile s => sendError NOT_FOUND ("Could not found file: " <+> s) step
 
 hQuery : Error e
-  => Applicative m
+  => Monad m
   => (src -> String)
-  -> Step me (URL auth pth src) h1 fn s h2 a ()
+  -> Step me (URL auth pth src) h1 fn s StringHeaders a ()
   -> m $ Step me (URL auth pth src) h1 fn Status StringHeaders a (Publisher IO e Buffer)
 hQuery toString step = do
   let query = toString step.request.url.search
-      stream : Publisher IO e Buffer = Stream.singleton $ fromString query
-  pure $ { response.body := stream
-         , response.headers := 
-           [ ("Content-Type", "text/plain")
-           , ("Content-Length", show $ length query)
-           ]
-         , response.status := OK
-         } step
+  text query step >>= status OK
 
 %language ElabReflection
 
@@ -78,19 +60,11 @@ record Example where
 
 hReturnExample : Error e
   => HasIO m
-  => Step me u h1 Request.simpleBody s h2 Example ()
+  => Step me u h1 Request.simpleBody s StringHeaders Example ()
   -> m $ Step me u h1 Request.simpleBody Status StringHeaders Example (Publisher IO e Buffer)
 hReturnExample step = do
-  let payload = fromString $ show step.request.body
-      stream : Publisher IO e Buffer = Stream.singleton payload
-  size <- rawSize payload
-  pure $ { response.body := stream
-         , response.headers := 
-           [ ("Content-Type", "text/plain")
-           , ("Content-Length", show size)
-           ]
-         , response.status := OK
-         } step
+  let payload = show step.request.body
+  text payload step >>= status OK
 
 hRouting : Error e
   => String
