@@ -37,13 +37,13 @@ sendError status str step = do
 
   size <- rawSize buffer
 
-  pure $ record 
-    { response.headers = 
+  pure $
+    { response.headers := 
       [ ("Content-Type", "text/plain")
       , ("Content-Length", show size)
       ]
-    , response.status = status
-    , response.body = publisher
+    , response.status := status
+    , response.body := publisher
     } step
 
 staticFileError : Error e => HasIO io => FileServingError -> StaticRequest e u -> io $ StaticResponse e u

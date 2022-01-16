@@ -14,5 +14,5 @@ record Request m u h (f : m -> Type -> Type) a where
 
 export
 Functor (Request m u h Request.simpleBody) where
-  map f req = record { body $= f } req
+  map f req = { body $= f } req
 

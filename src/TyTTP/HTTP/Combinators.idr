@@ -20,7 +20,7 @@ hToPublisher step =
   let originalPublisher : Lazy (Publisher m e a) = believe_me $ Response.body $ step.response
       publisher : Publisher m e a = selectBodyByMethod me empty originalPublisher
   in
-    pure $ record { response.body = publisher } step
+    pure $ { response.body := publisher } step
 
 ||| This function consumes the stream from the underlying server, thus the original stream cannot be used twice.
 ||| If you make sure that the original stream is not used twice, then this function can be used.

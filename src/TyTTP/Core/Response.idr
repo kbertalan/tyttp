@@ -9,5 +9,5 @@ record Response s h a where
 
 export
 Functor (Response s h) where
-  map f res = record { body $= f } res
+  map f res = { body $= f } res
 
