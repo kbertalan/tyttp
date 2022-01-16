@@ -1,6 +1,0 @@
-rm -rf build
-
-$1 --build test.ipkg
-build/exec/test
-
-

@@ -3,7 +3,6 @@ module TyTTP.HTTP.Routing
 import Data.Mime.Apache
 import Data.String
 
-import public TyTTP.Support.Routing
 import TyTTP
 import TyTTP.HTTP
 
