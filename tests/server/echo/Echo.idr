@@ -1,4 +1,4 @@
-module Server
+module Echo
 
 import Control.Monad.Trans
 import Data.Buffer
