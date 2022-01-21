@@ -35,11 +35,11 @@ namespace Simple
   export
   search : Monad m
     => (
-      Step me (URL auth pth SimpleSearch) h1 fn st h2 a b
-      -> m $ Step me' (URL auth pth SimpleSearch) h1' fn' st' h2' a' b'
+      Step me (URL auth pth SimpleSearch) h1 st h2 a b
+      -> m $ Step me' (URL auth pth SimpleSearch) h1' st' h2' a' b'
     )
-    -> Step me (URL auth pth String) h1 fn st h2 a b
-    -> m $ Step me' (URL auth pth String) h1' fn' st' h2' a' b'
+    -> Step me (URL auth pth String) h1 st h2 a b
+    -> m $ Step me' (URL auth pth String) h1' st' h2' a' b'
   search handler step = do
     let src = parseString $ URL.search step.request.url
     result <- handler $ { request.url := { search := src } step.request.url } step

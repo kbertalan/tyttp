@@ -21,8 +21,8 @@ sendError :
   => HasIO io
   => Status
   -> String
-  -> Step me u h1 fn s StringHeaders a b
-  -> io $ Step me u h1 fn Status StringHeaders a (Publisher IO e Buffer)
+  -> Step me u h1 s StringHeaders a b
+  -> io $ Step me u h1 Status StringHeaders a (Publisher IO e Buffer)
 sendError st str step = do
   text str step >>= status st
 

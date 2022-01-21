@@ -39,22 +39,21 @@ consumePayload t ItIsConsumer ct raw =
   consumeRaw t ct raw
 
 safeConsume :
-  HasIO n
-  => Error e
+  Error e
   => MonadTrans m
-  => Alternative (m (Promise e n))
+  => Alternative (m (Promise e IO))
   => HasContentType h1
   => (list: List Type)
   -> (areAccepts : All IsAccept list)
   -> (areConsumers : All (IsConsumer a) list)
   -> (ct : String)
   -> (
-    Step Method u h1 Request.simpleBody s h2 (Either ConsumerError a) b
-    -> Promise e n $ Step Method u' h1' Request.simpleBody s' h2' a' b'
+    Step Method u h1 s h2 (Either ConsumerError a) b
+    -> Promise e IO $ Step Method u' h1' s' h2' a' b'
   )
-  -> Step Method u h1 (HTTP.bodyOf {monad=IO, error=e}) s h2 Buffer b
-  -> m (Promise e n) $
-     Step Method u' h1' (HTTP.bodyOf {monad=IO, error=e}) s' h2' Buffer b'
+  -> Step Method u h1 s h2 (Publisher IO e Buffer) b
+  -> m (Promise e IO) $
+     Step Method u' h1' s' h2' (Publisher IO e Buffer) b'
 safeConsume [] _ _ _ _ _ = empty
 safeConsume (t::ts) (ItIsAccept::as) (c::cs) ct handler step =
   if elem ct (contentType t)
@@ -62,28 +61,27 @@ safeConsume (t::ts) (ItIsAccept::as) (c::cs) ct handler step =
           let raw = s.request.body
               result = handler $ { request.body := consumePayload t c ct raw } s
           result.continuation $ MkCallbacks
-            { onSucceded = \r => cb.onSucceded $ { request.body := raw } r
+            { onSucceded = \r => cb.onSucceded $ { request.body := singleton raw } r
             , onFailed = \err => cb.onFailed err }
   else safeConsume ts as cs ct handler step
 
 export
 consumes :
-  HasIO n
-  => Error e
+  Error e
   => MonadTrans m
-  => Alternative (m (Promise e n))
+  => Alternative (m (Promise e IO))
   => HasContentType h1
   => (list: List Type)
   -> {auto isNonEmpty : NonEmpty list}
   -> {auto areAccepts : All IsAccept list}
   -> {auto areConsumers : All (IsConsumer a) list}
   -> (
-    Step Method u h1 Request.simpleBody s h2 (Either ConsumerError a) b
-    -> Promise e n $ Step Method u' h1' Request.simpleBody s' h2' a' b'
+    Step Method u h1 s h2 (Either ConsumerError a) b
+    -> Promise e IO $ Step Method u' h1' s' h2' a' b'
   )
-  -> Step Method u h1 (HTTP.bodyOf {monad=IO, error=e}) s h2 Buffer b
-  -> m (Promise e n) $
-     Step Method u' h1' (HTTP.bodyOf {monad=IO, error=e}) s' h2' Buffer b'
+  -> Step Method u h1 s h2 (Publisher IO e Buffer) b
+  -> m (Promise e IO) $
+     Step Method u' h1' s' h2' (Publisher IO e Buffer) b'
 consumes list {isNonEmpty} {areAccepts} {areConsumers} handler step = do
   let Just ct = getContentType step.request.headers
     | _ => empty
@@ -92,30 +90,29 @@ consumes list {isNonEmpty} {areAccepts} {areConsumers} handler step = do
 
 export
 consumes' :
-  HasIO n
-  => Error e
+  Error e
   => MonadTrans m
-  => Alternative (m (Promise e n))
+  => Alternative (m (Promise e IO))
   => HasContentType h1
   => (list: List Type)
   -> {auto isNonEmpty : NonEmpty list}
   -> {auto areAccepts : All IsAccept list}
   -> {auto areConsumers : All (IsConsumer a) list}
   -> (
-    Step Method u h1 Request.simpleBody s h2 ConsumerError b
-    -> Promise e n $ Step Method u' h1' Request.simpleBody s' h2' a' b'
+    Step Method u h1 s h2 ConsumerError b
+    -> Promise e IO $ Step Method u' h1' s' h2' a' b'
   )
   -> (
-    Step Method u h1 Request.simpleBody s h2 a b
-    -> Promise e n $ Step Method u' h1' Request.simpleBody s' h2' a'' b'
+    Step Method u h1 s h2 a b
+    -> Promise e IO $ Step Method u' h1' s' h2' a'' b'
   )
-  -> Step Method u h1 (HTTP.bodyOf {monad=IO, error=e}) s h2 Buffer b
-  -> m (Promise e n) $
-     Step Method u' h1' (HTTP.bodyOf {monad=IO, error=e}) s' h2' Buffer b'
+  -> Step Method u h1 s h2 (Publisher IO e Buffer) b
+  -> m (Promise e IO) $
+     Step Method u' h1' s' h2' (Publisher IO e Buffer) b'
 consumes' list {isNonEmpty} {areAccepts} {areConsumers} errHandler handler step =
   let handler' : 
-        Step Method u h1 Request.simpleBody s h2 (Either ConsumerError a) b
-        -> Promise e n $ Step Method u' h1' Request.simpleBody s' h2' () b'
+        Step Method u h1 s h2 (Either ConsumerError a) b
+        -> Promise e IO $ Step Method u' h1' s' h2' () b'
       handler' s =
         case s.request.body of
           Right r => do

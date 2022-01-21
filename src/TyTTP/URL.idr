@@ -70,11 +70,11 @@ namespace Simple
   export
   url : MonadError URLParserError m
     => (
-      Step me SimpleURL h1 fn s h2 a b
-      -> m $ Step me' SimpleURL h1' fn' s' h2' a' b'
+      Step me SimpleURL h1 s h2 a b
+      -> m $ Step me' SimpleURL h1' s' h2' a' b'
     )
-    -> Step me String h1 fn s h2 a b
-    -> m $ Step me' String h1' fn' s' h2' a' b'
+    -> Step me String h1 s h2 a b
+    -> m $ Step me' String h1' s' h2' a' b'
   url handler step = case parse step.request.url of
     Right u => do
       result <- handler $ { request.url := u } step
@@ -85,15 +85,15 @@ namespace Simple
   url' : Monad m
     => (
       URLParserError
-      -> Step me String h1 fn s h2 a b
-      -> m $ Step me' String h1' fn' s' h2' a' b'
+      -> Step me String h1 s h2 a b
+      -> m $ Step me' String h1' s' h2' a' b'
     )
     -> (
-      Step me SimpleURL h1 fn s h2 a b
-      -> EitherT URLParserError m $ Step me' SimpleURL h1' fn' s' h2' a' b'
+      Step me SimpleURL h1 s h2 a b
+      -> EitherT URLParserError m $ Step me' SimpleURL h1' s' h2' a' b'
     )
-    -> Step me String h1 fn s h2 a b
-    -> m $ Step me' String h1' fn' s' h2' a' b'
+    -> Step me String h1 s h2 a b
+    -> m $ Step me' String h1' s' h2' a' b'
   url' errHandler handler step = do
     Right result <- runEitherT $ Simple.url handler step
       | Left err => errHandler err step

@@ -26,11 +26,11 @@ data FileServingError : Type where
 
 public export
 StaticRequest : (e : Type) -> Type -> Type
-StaticRequest e url = Step Method url StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = e }) Status StringHeaders Buffer ()
+StaticRequest e url = Step Method url StringHeaders Status StringHeaders (Publisher IO e Buffer) ()
 
 public export
 StaticResponse : (e : Type) -> Type -> Type
-StaticResponse e url = Step Method url StringHeaders (TyTTP.HTTP.bodyOf { monad = IO } { error = e }) Status StringHeaders Buffer (Publisher IO e Buffer)
+StaticResponse e url = Step Method url StringHeaders Status StringHeaders (Publisher IO e Buffer) (Publisher IO e Buffer)
 
 record StaticSuccesResult (e : Type) where
   constructor MkStaticSuccessResult

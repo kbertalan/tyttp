@@ -7,7 +7,6 @@ headers ->
 	host : localhost:3000
 	connection : close
 body ->
-empty
 POST
 200
 method -> POST

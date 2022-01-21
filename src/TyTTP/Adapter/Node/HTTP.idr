@@ -10,7 +10,7 @@ import TyTTP.HTTP as HTTP
 
 public export
 RawHttpRequest : Type
-RawHttpRequest = HttpRequest { monad = IO, error = NodeError } String StringHeaders Buffer
+RawHttpRequest = HttpRequest String StringHeaders $ Publisher IO NodeError Buffer
 
 public export
 RawHttpResponse : Type
@@ -34,7 +34,7 @@ toNodeResponse res nodeRes = do
 
 fromPromiseToNodeResponse : Error e
   => (e -> RawHttpResponse)
-  -> Promise e IO (Step Method String StringHeaders f Status StringHeaders b $ Publisher IO NodeError Buffer)
+  -> Promise e IO (Step Method String StringHeaders Status StringHeaders b $ Publisher IO NodeError Buffer)
   -> ServerResponse
   -> IO ()
 fromPromiseToNodeResponse errorHandler (MkPromise cont) nodeRes =
@@ -49,7 +49,7 @@ fromNodeRequest nodeReq =
   let method = parseMethod nodeReq.method
       path = nodeReq.url
       headers = nodeReq.headers.asList
-  in HTTP.mkRequest method path headers $ HTTP.mkRequestBody method $ MkPublisher $ \s => do
+  in HTTP.mkRequest method path headers $ MkPublisher $ \s => do
         nodeReq.onData s.onNext
         nodeReq.onError s.onFailed
         nodeReq.onEnd s.onSucceded
@@ -80,8 +80,8 @@ listen : HasIO io
    => HTTP
    -> ListenOptions e
    -> ( 
-    Step Method String StringHeaders (HTTP.bodyOf { monad = IO } {error = NodeError}) Status StringHeaders Buffer ()
-     -> Promise e IO $ Step Method String StringHeaders f Status StringHeaders b (Publisher IO NodeError Buffer)
+    Step Method String StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
+     -> Promise e IO $ Step Method String StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
   )
    -> io Server
 listen http options handler = do
@@ -103,8 +103,8 @@ listen' : HasIO io
    => { auto http : HTTP }
    -> { default defaultListenOptions options : ListenOptions e }
    -> ( 
-    Step Method String StringHeaders (HTTP.bodyOf { monad = IO } {error = NodeError}) Status StringHeaders Buffer ()
-     -> Promise e IO $ Step Method String StringHeaders f Status StringHeaders b (Publisher IO NodeError Buffer)
+    Step Method String StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
+     -> Promise e IO $ Step Method String StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
   )
    -> io Server
 listen' {http} {options} handler = listen http options handler

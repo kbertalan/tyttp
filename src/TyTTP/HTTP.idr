@@ -56,19 +56,6 @@ parseMethod str = case str of
   s => OtherMethod s
 
 public export
-selectBodyByMethod : Method -> Lazy a -> Lazy a -> a
-selectBodyByMethod m withoutBody withBody = case m of
-  OPTIONS => withoutBody
-  GET => withoutBody
-  HEAD => withoutBody
-  POST => withBody
-  PUT => withBody
-  DELETE => withoutBody
-  TRACE => withoutBody
-  CONNECT => withoutBody
-  OtherMethod _ => withBody
-
-public export
 StringHeaders : Type
 StringHeaders = List (String, String)
 
@@ -82,29 +69,12 @@ implementation HasContentType StringHeaders where
 
 
 public export
-bodyOf : { monad : Type -> Type } -> { error : Type } -> Method -> Type -> Type
-bodyOf m a = selectBodyByMethod m () $ Publisher monad error a
-
-public export
-HttpRequest : { auto monad : Type -> Type } -> { auto error : Type} -> Type -> Type -> Type -> Type
-HttpRequest p h a = Request Method p h (bodyOf { monad } { error }) a
+HttpRequest : Type -> Type -> Type -> Type
+HttpRequest p h a = Request Method p h a
 
 export
-mkRequest : { monad : Type -> Type } -> { error : Type } -> (m : Method) -> p -> h -> bodyOf { monad } { error } m a -> HttpRequest { monad } { error } p h a
+mkRequest : (m : Method) -> p -> h -> a -> HttpRequest p h a
 mkRequest m p h a = MkRequest m p h a
-
-export
-mkRequestBody : {0 monad : Type -> Type } -> {0 error : Type } -> (m : Method) -> Lazy (Publisher monad error b) -> bodyOf {monad} {error} m b
-mkRequestBody m x = case m of
-  OPTIONS => ()
-  GET => ()
-  HEAD => ()
-  POST => x
-  PUT => x
-  DELETE => ()
-  TRACE => ()
-  CONNECT => ()
-  (OtherMethod _) => x
 
 public export
 data Status

@@ -1,18 +1,14 @@
 module TyTTP.Core.Request
 
 public export
-simpleBody : { 0 m : Type } -> m -> Type -> Type
-simpleBody m a = a
-
-public export
-record Request m u h (f : m -> Type -> Type) a where
+record Request m u h a where
   constructor MkRequest
   method : m
   url : u
   headers : h
-  body : f method a
+  body : a
 
 export
-Functor (Request m u h Request.simpleBody) where
+Functor (Request m u h) where
   map f req = { body $= f } req
 

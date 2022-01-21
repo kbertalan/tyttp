@@ -8,8 +8,8 @@ export
 text :
   Applicative m
   => String
-  -> Step me u h1 fn s StringHeaders a b
-  -> m $ Step me u h1 fn s StringHeaders a (Publisher IO e Buffer)
+  -> Step me u h1 s StringHeaders a b
+  -> m $ Step me u h1 s StringHeaders a (Publisher IO e Buffer)
 text str step = do
   let stream : Publisher IO e Buffer = Stream.singleton $ fromString str
   pure $ { response.body := stream
@@ -23,7 +23,7 @@ export
 status :
   Applicative m
   => Status
-  -> Step me u h1 fn s h2 a b
-  -> m $ Step me u h1 fn Status h2 a b
+  -> Step me u h1 s h2 a b
+  -> m $ Step me u h1 Status h2 a b
 status s step = pure $ { response.status := s } step
 

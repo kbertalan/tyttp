@@ -11,8 +11,8 @@ import TyTTP.Core.Error
 import TyTTP.HTTP
 import TyTTP.HTTP.Combinators
 
-hReflect : Step Method String StringHeaders (HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer ()
-  -> IO $ Step Method String StringHeaders (HTTP.bodyOf { monad = IO } { error = NodeError }) Status StringHeaders Buffer (Publisher IO NodeError Buffer)
+hReflect : Step Method String StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
+  -> IO $ Step Method String StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) (Publisher IO NodeError Buffer)
 hReflect step = do
   let m = step.request.method
       h = step.request.headers
@@ -22,8 +22,7 @@ hReflect step = do
         s.onNext "headers ->"
         for_ h $ \v => s.onNext $ fromString "\t\{fst v} : \{snd v}"
         s.onNext "body ->"
-        selectBodyByMethod m (s.onNext "empty" >>= s.onSucceded) $
-          (believe_me step.request.body).subscribe s
+        step.request.body.subscribe s
   pure $ { response.body := p } step
 
 main : IO ()
