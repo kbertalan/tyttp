@@ -15,7 +15,6 @@ modules = TyTTP
   , TyTTP.HTTP
   , TyTTP.HTTP.Combinators
   , TyTTP.HTTP.Consumer
-  , TyTTP.HTTP.Consumer.JSON
   , TyTTP.HTTP.Producer
   , TyTTP.HTTP.Routing
   , TyTTP.URL
@@ -35,9 +34,6 @@ modules = TyTTP
 depends = base
   , apache-mime-types
   , contrib
-  , sop
-  , elab-util
-  , json
 
 sourcedir = "src"
 
