@@ -26,11 +26,11 @@ data FileServingError : Type where
 
 public export
 StaticRequest : (e : Type) -> Type -> Type
-StaticRequest e url = Step Method url StringHeaders Status StringHeaders (Publisher IO e Buffer) ()
+StaticRequest e url = Context Method url StringHeaders Status StringHeaders (Publisher IO e Buffer) ()
 
 public export
 StaticResponse : (e : Type) -> Type -> Type
-StaticResponse e url = Step Method url StringHeaders Status StringHeaders (Publisher IO e Buffer) (Publisher IO e Buffer)
+StaticResponse e url = Context Method url StringHeaders Status StringHeaders (Publisher IO e Buffer) (Publisher IO e Buffer)
 
 record StaticSuccesResult (e : Type) where
   constructor MkStaticSuccessResult
@@ -46,10 +46,10 @@ hStatic : Error e
     -> StaticRequest e (URL a Path s)
     -> io $ StaticResponse e (URL a Path s)
   )
-  -> (step : StaticRequest e (URL a Path s))
+  -> (ctx : StaticRequest e (URL a Path s))
   -> io $ StaticResponse e (URL a Path s)
-hStatic folder returnError step = eitherT (flip returnError step) returnSuccess $ do
-    let resource = step.request.url.path.rest
+hStatic folder returnError ctx = eitherT (flip returnError ctx) returnSuccess $ do
+    let resource = ctx.request.url.path.rest
         file = "\{folder}\{resource}"
 
     fs <- FS.require
@@ -83,7 +83,7 @@ hStatic folder returnError step = eitherT (flip returnError step) returnSuccess 
                ]
       pure $ { response.status := OK
              , response.headers := hs
-             , response.body := result.stream } step 
+             , response.body := result.stream } ctx 
 
     extensionOf' : (ext: List Char) -> (file: List Char) -> (dot: Bool) -> Maybe (List Char)
     extensionOf' ext ('.' :: xs) _ = extensionOf' xs xs True

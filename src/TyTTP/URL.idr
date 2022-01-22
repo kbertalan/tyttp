@@ -70,33 +70,33 @@ namespace Simple
   export
   parseUrl : MonadError URLParserError m
     => (
-      Step me SimpleURL h1 s h2 a b
-      -> m $ Step me' SimpleURL h1' s' h2' a' b'
+      Context me SimpleURL h1 s h2 a b
+      -> m $ Context me' SimpleURL h1' s' h2' a' b'
     )
-    -> Step me String h1 s h2 a b
-    -> m $ Step me' String h1' s' h2' a' b'
-  parseUrl handler step = case parse step.request.url of
+    -> Context me String h1 s h2 a b
+    -> m $ Context me' String h1' s' h2' a' b'
+  parseUrl handler ctx = case parse ctx.request.url of
     Right u => do
-      result <- handler $ { request.url := u } step
-      pure $ { request.url := step.request.url } result
+      result <- handler $ { request.url := u } ctx
+      pure $ { request.url := ctx.request.url } result
     Left err => throwError err
 
   export
   parseUrl' : Monad m
     => (
       URLParserError
-      -> Step me String h1 s h2 a b
-      -> m $ Step me' String h1' s' h2' a' b'
+      -> Context me String h1 s h2 a b
+      -> m $ Context me' String h1' s' h2' a' b'
     )
     -> (
-      Step me SimpleURL h1 s h2 a b
-      -> EitherT URLParserError m $ Step me' SimpleURL h1' s' h2' a' b'
+      Context me SimpleURL h1 s h2 a b
+      -> EitherT URLParserError m $ Context me' SimpleURL h1' s' h2' a' b'
     )
-    -> Step me String h1 s h2 a b
-    -> m $ Step me' String h1' s' h2' a' b'
-  parseUrl' errHandler handler step = do
-    Right result <- runEitherT $ Simple.parseUrl handler step
-      | Left err => errHandler err step
+    -> Context me String h1 s h2 a b
+    -> m $ Context me' String h1' s' h2' a' b'
+  parseUrl' errHandler handler ctx = do
+    Right result <- runEitherT $ Simple.parseUrl handler ctx
+      | Left err => errHandler err ctx
     pure result
 
 

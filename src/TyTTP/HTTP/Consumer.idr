@@ -48,22 +48,22 @@ safeConsume :
   -> (areConsumers : All (IsConsumer a) list)
   -> (ct : String)
   -> (
-    Step Method u h1 s h2 (Either ConsumerError a) b
-    -> Promise e IO $ Step Method u' h1' s' h2' a' b'
+    Context Method u h1 s h2 (Either ConsumerError a) b
+    -> Promise e IO $ Context Method u' h1' s' h2' a' b'
   )
-  -> Step Method u h1 s h2 (Publisher IO e Buffer) b
+  -> Context Method u h1 s h2 (Publisher IO e Buffer) b
   -> m (Promise e IO) $
-     Step Method u' h1' s' h2' (Publisher IO e Buffer) b'
+     Context Method u' h1' s' h2' (Publisher IO e Buffer) b'
 safeConsume [] _ _ _ _ _ = empty
-safeConsume (t::ts) (ItIsAccept::as) (c::cs) ct handler step =
+safeConsume (t::ts) (ItIsAccept::as) (c::cs) ct handler ctx =
   if elem ct (contentType t)
-  then lift $ flip unsafeConsumeBody step $ \s => MkPromise $ \cb => do
+  then lift $ flip unsafeConsumeBody ctx $ \s => MkPromise $ \cb => do
           let raw = s.request.body
               result = handler $ { request.body := consumePayload t c ct raw } s
           result.continuation $ MkCallbacks
             { onSucceded = \r => cb.onSucceded $ { request.body := singleton raw } r
             , onFailed = \err => cb.onFailed err }
-  else safeConsume ts as cs ct handler step
+  else safeConsume ts as cs ct handler ctx
 
 export
 consumes :
@@ -76,17 +76,17 @@ consumes :
   -> {auto areAccepts : All IsAccept list}
   -> {auto areConsumers : All (IsConsumer a) list}
   -> (
-    Step Method u h1 s h2 (Either ConsumerError a) b
-    -> Promise e IO $ Step Method u' h1' s' h2' a' b'
+    Context Method u h1 s h2 (Either ConsumerError a) b
+    -> Promise e IO $ Context Method u' h1' s' h2' a' b'
   )
-  -> Step Method u h1 s h2 (Publisher IO e Buffer) b
+  -> Context Method u h1 s h2 (Publisher IO e Buffer) b
   -> m (Promise e IO) $
-     Step Method u' h1' s' h2' (Publisher IO e Buffer) b'
-consumes list {isNonEmpty} {areAccepts} {areConsumers} handler step = do
-  let Just ct = getContentType step.request.headers
+     Context Method u' h1' s' h2' (Publisher IO e Buffer) b'
+consumes list {isNonEmpty} {areAccepts} {areConsumers} handler ctx = do
+  let Just ct = getContentType ctx.request.headers
     | _ => empty
 
-  safeConsume list areAccepts areConsumers ct handler step
+  safeConsume list areAccepts areConsumers ct handler ctx
 
 export
 consumes' :
@@ -99,20 +99,20 @@ consumes' :
   -> {auto areAccepts : All IsAccept list}
   -> {auto areConsumers : All (IsConsumer a) list}
   -> (
-    Step Method u h1 s h2 ConsumerError b
-    -> Promise e IO $ Step Method u' h1' s' h2' a' b'
+    Context Method u h1 s h2 ConsumerError b
+    -> Promise e IO $ Context Method u' h1' s' h2' a' b'
   )
   -> (
-    Step Method u h1 s h2 a b
-    -> Promise e IO $ Step Method u' h1' s' h2' a'' b'
+    Context Method u h1 s h2 a b
+    -> Promise e IO $ Context Method u' h1' s' h2' a'' b'
   )
-  -> Step Method u h1 s h2 (Publisher IO e Buffer) b
+  -> Context Method u h1 s h2 (Publisher IO e Buffer) b
   -> m (Promise e IO) $
-     Step Method u' h1' s' h2' (Publisher IO e Buffer) b'
-consumes' list {isNonEmpty} {areAccepts} {areConsumers} errHandler handler step =
+     Context Method u' h1' s' h2' (Publisher IO e Buffer) b'
+consumes' list {isNonEmpty} {areAccepts} {areConsumers} errHandler handler ctx =
   let handler' : 
-        Step Method u h1 s h2 (Either ConsumerError a) b
-        -> Promise e IO $ Step Method u' h1' s' h2' () b'
+        Context Method u h1 s h2 (Either ConsumerError a) b
+        -> Promise e IO $ Context Method u' h1' s' h2' () b'
       handler' s =
         case s.request.body of
           Right r => do
@@ -121,4 +121,4 @@ consumes' list {isNonEmpty} {areAccepts} {areConsumers} errHandler handler step 
           Left  l => do
             result <- errHandler $ { request.body := l } s 
             pure $ { request.body := () } result
-  in consumes list handler' step
+  in consumes list handler' ctx

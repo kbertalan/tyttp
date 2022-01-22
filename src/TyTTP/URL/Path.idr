@@ -121,15 +121,15 @@ path : Monad m
   => (str : String)
   -> {auto 0 ok : IsRight (Path.parse str)}
   -> (
-    Step me (URL auth Path s) h1 st h2 a b
-    -> m $ Step me' (URL auth Path s) h1' st' h2' a' b'
+    Context me (URL auth Path s) h1 st h2 a b
+    -> m $ Context me' (URL auth Path s) h1' st' h2' a' b'
   )
-  -> Step me (URL auth String s) h1 st h2 a b
-  -> m $ Step me' (URL auth String s) h1' st' h2' a' b'
-path str {ok} handler step with (Path.parse str)
+  -> Context me (URL auth String s) h1 st h2 a b
+  -> m $ Context me' (URL auth String s) h1' st' h2' a' b'
+path str {ok} handler ctx with (Path.parse str)
   _ | Right parsedPattern =
-    case matcher step.request.url.path parsedPattern of
+    case matcher ctx.request.url.path parsedPattern of
       Just p => do
-        result <- handler $ { request.url := { path := p } step.request.url } step
-        pure $ { request.url := { path := step.request.url.path } result.request.url } result
+        result <- handler $ { request.url := { path := p } ctx.request.url } ctx
+        pure $ { request.url := { path := ctx.request.url.path } result.request.url } result
       Nothing => empty

@@ -21,10 +21,10 @@ sendError :
   => HasIO io
   => Status
   -> String
-  -> Step me u h1 s StringHeaders a b
-  -> io $ Step me u h1 Status StringHeaders a (Publisher IO e Buffer)
-sendError st str step = do
-  text str step >>= status st
+  -> Context me u h1 s StringHeaders a b
+  -> io $ Context me u h1 Status StringHeaders a (Publisher IO e Buffer)
+sendError st str ctx = do
+  text str ctx >>= status st
 
 routeDef : Error e
   => String
@@ -36,10 +36,10 @@ routeDef folder =
     in
       parseUrl' urlError :>
         routes' routingError
-          [ get $ path "/static/*" :> hStatic folder $ flip $ \step =>
+          [ get $ path "/static/*" :> hStatic folder $ flip $ \ctx =>
               \case
-                StatError e => sendError INTERNAL_SERVER_ERROR ("File error: " <+> message e) step
-                NotAFile s => sendError NOT_FOUND ("Could not found file: " <+> s) step
+                StatError e => sendError INTERNAL_SERVER_ERROR ("File error: " <+> message e) ctx
+                NotAFile s => sendError NOT_FOUND ("Could not found file: " <+> s) ctx
           ]
 
 main : IO ()

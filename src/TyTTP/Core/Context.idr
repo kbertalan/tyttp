@@ -1,21 +1,21 @@
-module TyTTP.Core.Step
+module TyTTP.Core.Context
 
 import Control.Monad.Trans
 import TyTTP.Core.Request
 import TyTTP.Core.Response
 
 public export
-record Step me u h1 s h2 a b where
-  constructor MkStep
+record Context me u h1 s h2 a b where
+  constructor MkContext
   request : Request me u h1 a
   response : Response s h2 b
 
 export
-Functor (Step me u h1 s h2 a) where
+Functor (Context me u h1 s h2 a) where
   map f step = { response $= map f } step
 
 export
-Bifunctor (Step me u h1 s h2) where
+Bifunctor (Context me u h1 s h2) where
   bimap f g step = { request $= map f, response $= map g } step
 
 infixr 0 :>, :>>

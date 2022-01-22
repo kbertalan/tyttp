@@ -5,12 +5,12 @@ modules = TyTTP
   , TyTTP.Adapter.Node.HTTP
   , TyTTP.Adapter.Node.Static
   , TyTTP.Adapter.Node.URI
+  , TyTTP.Core.Context
   , TyTTP.Core.Error
   , TyTTP.Core.Promise
   , TyTTP.Core.Request
   , TyTTP.Core.Response
   , TyTTP.Core.Routing
-  , TyTTP.Core.Step
   , TyTTP.Core.Stream
   , TyTTP.HTTP
   , TyTTP.HTTP.Combinators

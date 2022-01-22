@@ -34,7 +34,7 @@ toNodeResponse res nodeRes = do
 
 fromPromiseToNodeResponse : Error e
   => (e -> RawHttpResponse)
-  -> Promise e IO (Step Method String StringHeaders Status StringHeaders b $ Publisher IO NodeError Buffer)
+  -> Promise e IO (Context Method String StringHeaders Status StringHeaders b $ Publisher IO NodeError Buffer)
   -> ServerResponse
   -> IO ()
 fromPromiseToNodeResponse errorHandler (MkPromise cont) nodeRes =
@@ -80,8 +80,8 @@ listen : HasIO io
    => HTTP
    -> ListenOptions e
    -> ( 
-    Step Method String StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-     -> Promise e IO $ Step Method String StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
+    Context Method String StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
+     -> Promise e IO $ Context Method String StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
   )
    -> io Server
 listen http options handler = do
@@ -90,7 +90,7 @@ listen http options handler = do
   server.onRequest $ \req => \res => do
     let handlerReq = fromNodeRequest req
         initialRes = MkResponse OK [] () {h = StringHeaders}
-        result = handler $ MkStep handlerReq initialRes
+        result = handler $ MkContext handlerReq initialRes
 
     fromPromiseToNodeResponse options.errorHandler result res
 
@@ -103,8 +103,8 @@ listen' : HasIO io
    => { auto http : HTTP }
    -> { default defaultListenOptions options : ListenOptions e }
    -> ( 
-    Step Method String StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-     -> Promise e IO $ Step Method String StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
+    Context Method String StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
+     -> Promise e IO $ Context Method String StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
   )
    -> io Server
 listen' {http} {options} handler = listen http options handler

@@ -15,12 +15,12 @@ export
 unsafeConsumeBody : Error e
   => HasIO m
   => (
-    Step Method u h1 s h2 Buffer b
-    -> Promise e m $ Step Method u' h1' s' h2' a' b'
+    Context Method u h1 s h2 Buffer b
+    -> Promise e m $ Context Method u' h1' s' h2' a' b'
   )
-  -> Step Method u h1 s h2 (Publisher m e Buffer) b
-  -> Promise e m $ Step Method u' h1' s' h2' a' b'
-unsafeConsumeBody handler step = MkPromise $ \cb => do
+  -> Context Method u h1 s h2 (Publisher m e Buffer) b
+  -> Promise e m $ Context Method u' h1' s' h2' a' b'
+unsafeConsumeBody handler ctx = MkPromise $ \cb => do
   acc <- newIORef Lin
   let handlerCallbacks = MkCallbacks
         { onSucceded = cb.onSucceded
@@ -31,9 +31,9 @@ unsafeConsumeBody handler step = MkPromise $ \cb => do
         , onSucceded = \_ => do
             all <- concatBuffers =<< asList <$> readIORef acc
             emptyBuffer <- Ext.newBuffer 0
-            let result = handler $ { request.body := fromMaybe emptyBuffer all } step
+            let result = handler $ { request.body := fromMaybe emptyBuffer all } ctx
             result.continuation handlerCallbacks
         , onFailed = cb.onFailed
         }
-  step.request.body.subscribe subscriber
+  ctx.request.body.subscribe subscriber
 

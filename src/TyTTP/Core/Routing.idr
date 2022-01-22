@@ -1,32 +1,32 @@
 module TyTTP.Core.Routing
 
 import Control.Monad.Maybe
-import TyTTP.Core.Step
+import TyTTP.Core.Context
 
 export
 routes : Alternative m
   => List (
-    Step me u h1 s h2 a b
-    -> m $ Step me' p' h1' s' h2' a' b'
+    Context me u h1 s h2 a b
+    -> m $ Context me' p' h1' s' h2' a' b'
   )
-  -> Step me u h1 s h2 a b
-  -> m $ Step me' p' h1' s' h2' a' b'
-routes handlers step = choiceMap ($ step) handlers
+  -> Context me u h1 s h2 a b
+  -> m $ Context me' p' h1' s' h2' a' b'
+routes handlers ctx = choiceMap ($ ctx) handlers
 
 export
 routes' : Monad m
   => (
-    Step me u h1 s h2 a b
-    -> m $ Step me' p' h1' s' h2' a' b'
+    Context me u h1 s h2 a b
+    -> m $ Context me' p' h1' s' h2' a' b'
   )
   -> List (
-    Step me u h1 s h2 a b
-    -> MaybeT m $ Step me' p' h1' s' h2' a' b'
+    Context me u h1 s h2 a b
+    -> MaybeT m $ Context me' p' h1' s' h2' a' b'
   )
-  -> Step me u h1 s h2 a b
-  -> m $ Step me' p' h1' s' h2' a' b'
-routes' def handlers step = do
-  Just result <- runMaybeT $ routes handlers step
-    | Nothing => def step
+  -> Context me u h1 s h2 a b
+  -> m $ Context me' p' h1' s' h2' a' b'
+routes' def handlers ctx = do
+  Just result <- runMaybeT $ routes handlers ctx
+    | Nothing => def ctx
   pure result
 
