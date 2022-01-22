@@ -1,7 +1,6 @@
 module Main
 
 import Data.Buffer
-import Data.List.Quantifiers
 import Control.Monad.Trans
 import Control.Monad.Either
 import Control.Monad.Maybe
@@ -40,12 +39,12 @@ hRouting : Error e
   -> Promise e IO $ Step Method String StringHeaders Status StringHeaders (Publisher IO e Buffer) (Publisher IO e Buffer)
 hRouting =
   let routingError = sendError NOT_FOUND "Resource could not be found"
-      urlError = \err => sendError BAD_REQUEST "URL has invalid format"
-      uriError = sendError BAD_REQUEST "URI decode has failed"
+      parseUrlError = \err => sendError BAD_REQUEST "URL has invalid format"
+      decodeUriError = sendError BAD_REQUEST "URI decode has failed"
   in
-    uri' uriError :> url' urlError :> routes' routingError
-        [ get $ pattern "/query" :>> hQuery id
-        , get $ pattern "/parsed" :> Simple.search :> hQuery show
+    decodeUri' decodeUriError :> parseUrl' parseUrlError :> routes' routingError
+        [ get $ path "/query" :>> hQuery id
+        , get $ path "/parsed" :> Simple.search :> hQuery show
         ]
 
 main : IO ()

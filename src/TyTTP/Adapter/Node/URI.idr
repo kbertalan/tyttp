@@ -5,19 +5,19 @@ import Node.URI
 import TyTTP
 
 export
-uri : Alternative m
+decodeUri : Alternative m
   => (
     Step me String h1 s h2 a b
     -> m $ Step me' String h1' s' h2' a' b'
   )
   -> Step me String h1 s h2 a b
   -> m $ Step me' String h1' s' h2' a' b'
-uri handler step = case decodeURI step.request.url of
+decodeUri handler step = case Node.URI.decodeURI step.request.url of
   Right str => handler $ { request.url := str } step
   Left _ => empty
 
 export
-uri' : Monad m
+decodeUri' : Monad m
   => (
     Step me String h1 s h2 a b
     -> m $ Step me' String h1' s' h2' a' b'
@@ -28,7 +28,7 @@ uri' : Monad m
   )
   -> Step me String h1 s h2 a b
   -> m $ Step me' String h1' s' h2' a' b'
-uri' defHandler handler step = do
-  Just result <- runMaybeT $ uri handler step
+decodeUri' defHandler handler step = do
+  Just result <- runMaybeT $ decodeUri handler step
     | Nothing => defHandler step
   pure result

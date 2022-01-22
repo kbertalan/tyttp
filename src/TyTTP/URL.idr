@@ -68,21 +68,21 @@ namespace Simple
       scheme xs url = authority xs url
 
   export
-  url : MonadError URLParserError m
+  parseUrl : MonadError URLParserError m
     => (
       Step me SimpleURL h1 s h2 a b
       -> m $ Step me' SimpleURL h1' s' h2' a' b'
     )
     -> Step me String h1 s h2 a b
     -> m $ Step me' String h1' s' h2' a' b'
-  url handler step = case parse step.request.url of
+  parseUrl handler step = case parse step.request.url of
     Right u => do
       result <- handler $ { request.url := u } step
       pure $ { request.url := step.request.url } result
     Left err => throwError err
 
   export
-  url' : Monad m
+  parseUrl' : Monad m
     => (
       URLParserError
       -> Step me String h1 s h2 a b
@@ -94,8 +94,8 @@ namespace Simple
     )
     -> Step me String h1 s h2 a b
     -> m $ Step me' String h1' s' h2' a' b'
-  url' errHandler handler step = do
-    Right result <- runEitherT $ Simple.url handler step
+  parseUrl' errHandler handler step = do
+    Right result <- runEitherT $ Simple.parseUrl handler step
       | Left err => errHandler err step
     pure result
 
