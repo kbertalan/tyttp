@@ -11,14 +11,15 @@ import TyTTP.Core.Error
 import TyTTP.HTTP
 import TyTTP.HTTP.Combinators
 
-hReflect : Context Method String StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-  -> IO $ Context Method String StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) (Publisher IO NodeError Buffer)
+hReflect : Context Method String Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
+  -> IO $ Context Method String Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) (Publisher IO NodeError Buffer)
 hReflect ctx = do
   let m = ctx.request.method
       h = ctx.request.headers
       p : Publisher IO NodeError Buffer = MkPublisher $ \s => do
         s.onNext $ fromString "method -> \{show m}"
         s.onNext $ fromString "url -> \{ctx.request.url}"
+        s.onNext $ fromString "version -> \{show ctx.request.version}"
         s.onNext "headers ->"
         for_ h $ \v => s.onNext $ fromString "\t\{fst v} : \{snd v}"
         s.onNext "body ->"

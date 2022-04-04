@@ -121,11 +121,11 @@ path : Monad m
   => (str : String)
   -> {auto 0 ok : IsRight (Path.parse str)}
   -> (
-    Context me (URL auth Path s) h1 st h2 a b
-    -> m $ Context me' (URL auth Path s) h1' st' h2' a' b'
+    Context me (URL auth Path s) v h1 st h2 a b
+    -> m $ Context me' (URL auth Path s) v' h1' st' h2' a' b'
   )
-  -> Context me (URL auth String s) h1 st h2 a b
-  -> m $ Context me' (URL auth String s) h1' st' h2' a' b'
+  -> Context me (URL auth String s) v h1 st h2 a b
+  -> m $ Context me' (URL auth String s) v' h1' st' h2' a' b'
 path str {ok} handler ctx with (Path.parse str)
   _ | Right parsedPattern =
     case matcher ctx.request.url.path parsedPattern of

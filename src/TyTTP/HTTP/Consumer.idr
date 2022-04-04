@@ -48,12 +48,12 @@ safeConsume :
   -> (areConsumers : All (IsConsumer a) list)
   -> (ct : String)
   -> (
-    Context Method u h1 s h2 (Either ConsumerError a) b
-    -> Promise e IO $ Context Method u' h1' s' h2' a' b'
+    Context Method u v h1 s h2 (Either ConsumerError a) b
+    -> Promise e IO $ Context Method u' v' h1' s' h2' a' b'
   )
-  -> Context Method u h1 s h2 (Publisher IO e Buffer) b
+  -> Context Method u v h1 s h2 (Publisher IO e Buffer) b
   -> m (Promise e IO) $
-     Context Method u' h1' s' h2' (Publisher IO e Buffer) b'
+     Context Method u' v' h1' s' h2' (Publisher IO e Buffer) b'
 safeConsume [] _ _ _ _ _ = empty
 safeConsume (t::ts) (ItIsAccept::as) (c::cs) ct handler ctx =
   if elem ct (contentType t)
@@ -76,12 +76,12 @@ consumes :
   -> {auto areAccepts : All IsAccept list}
   -> {auto areConsumers : All (IsConsumer a) list}
   -> (
-    Context Method u h1 s h2 (Either ConsumerError a) b
-    -> Promise e IO $ Context Method u' h1' s' h2' a' b'
+    Context Method u v h1 s h2 (Either ConsumerError a) b
+    -> Promise e IO $ Context Method u' v' h1' s' h2' a' b'
   )
-  -> Context Method u h1 s h2 (Publisher IO e Buffer) b
+  -> Context Method u v h1 s h2 (Publisher IO e Buffer) b
   -> m (Promise e IO) $
-     Context Method u' h1' s' h2' (Publisher IO e Buffer) b'
+     Context Method u' v' h1' s' h2' (Publisher IO e Buffer) b'
 consumes list {isNonEmpty} {areAccepts} {areConsumers} handler ctx = do
   let Just ct = getContentType ctx.request.headers
     | _ => empty
@@ -99,20 +99,20 @@ consumes' :
   -> {auto areAccepts : All IsAccept list}
   -> {auto areConsumers : All (IsConsumer a) list}
   -> (
-    Context Method u h1 s h2 ConsumerError b
-    -> Promise e IO $ Context Method u' h1' s' h2' a' b'
+    Context Method u v h1 s h2 ConsumerError b
+    -> Promise e IO $ Context Method u' v' h1' s' h2' a' b'
   )
   -> (
-    Context Method u h1 s h2 a b
-    -> Promise e IO $ Context Method u' h1' s' h2' a'' b'
+    Context Method u v h1 s h2 a b
+    -> Promise e IO $ Context Method u' v' h1' s' h2' a'' b'
   )
-  -> Context Method u h1 s h2 (Publisher IO e Buffer) b
+  -> Context Method u v h1 s h2 (Publisher IO e Buffer) b
   -> m (Promise e IO) $
-     Context Method u' h1' s' h2' (Publisher IO e Buffer) b'
+     Context Method u' v' h1' s' h2' (Publisher IO e Buffer) b'
 consumes' list {isNonEmpty} {areAccepts} {areConsumers} errHandler handler ctx =
   let handler' : 
-        Context Method u h1 s h2 (Either ConsumerError a) b
-        -> Promise e IO $ Context Method u' h1' s' h2' () b'
+        Context Method u v h1 s h2 (Either ConsumerError a) b
+        -> Promise e IO $ Context Method u' v' h1' s' h2' () b'
       handler' s =
         case s.request.body of
           Right r => do
