@@ -26,6 +26,7 @@ modules = TyTTP
   , Node.FS
   , Node.FS.Stats
   , Node.FS.Stream
+  , Node.Headers
   , Node.HTTP
   , Node.HTTP.Client
   , Node.HTTP.Server
