@@ -9,7 +9,7 @@ node : TestPool
 node = MkTestPool "Node tests" [] (Just Node) [ "node/uri" ]
 
 server : TestPool
-server = MkTestPool "Server" [] (Just Node) [ "server/echo", "server/files" ]
+server = MkTestPool "Server" [] (Just Node) [ "server/http/echo", "server/http/files", "server/http2/echo" ]
 
 ext : TestPool
 ext = MkTestPool "Extensions" [] Nothing [ "ext/buffer" ]
