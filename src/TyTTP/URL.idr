@@ -11,6 +11,13 @@ data Scheme
   | HTTPS
   | OtherScheme String
 
+public export
+parseScheme : String -> Scheme
+parseScheme s = case s of
+  "http" => HTTP
+  "https" => HTTPS
+  s => OtherScheme s
+
 namespace Scheme
   export
   parse : String -> Scheme

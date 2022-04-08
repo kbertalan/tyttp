@@ -3,6 +3,7 @@ package tyttp
 modules = TyTTP
   , TyTTP.Adapter.Node.Error
   , TyTTP.Adapter.Node.HTTP
+  , TyTTP.Adapter.Node.HTTP2
   , TyTTP.Adapter.Node.Static
   , TyTTP.Adapter.Node.URI
   , TyTTP.Core.Context
@@ -28,6 +29,8 @@ modules = TyTTP
   , Node.HTTP
   , Node.HTTP.Client
   , Node.HTTP.Server
+  , Node.HTTP2
+  , Node.HTTP2.Server
   , Node.URI
   , Data.Buffer.Ext
 

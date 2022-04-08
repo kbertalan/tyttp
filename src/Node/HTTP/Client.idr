@@ -1,6 +1,7 @@
 module Node.HTTP.Client
 
 import public Node.HTTP
+import public Node.Headers
 
 export
 data ClientRequest : Type where [external]

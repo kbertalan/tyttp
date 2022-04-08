@@ -1,6 +1,7 @@
 module Node.HTTP.Server
 
 import public Node.HTTP
+import public Node.Headers
 
 export
 data IncomingMessage : Type where [external]

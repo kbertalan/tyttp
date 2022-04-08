@@ -27,7 +27,7 @@ toNodeResponse res nodeRes = do
         { onFailed = \e => pure () }
         { onSucceded = \_ => nodeRes.end }
   where
-    mapHeaders : StringHeaders -> IO Node.HTTP.Headers.Headers
+    mapHeaders : StringHeaders -> IO Headers
     mapHeaders h = do
       newHeaders <- empty
       foldlM (\hs, (k,v) => hs.setHeader k v) newHeaders h
