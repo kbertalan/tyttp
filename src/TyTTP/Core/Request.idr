@@ -1,14 +1,15 @@
 module TyTTP.Core.Request
 
 public export
-record Request m u h a where
+record Request m u v h a where
   constructor MkRequest
   method : m
   url : u
+  version : v
   headers : h
   body : a
 
 export
-Functor (Request m u h) where
+Functor (Request m u v h) where
   map f req = { body $= f } req
 

@@ -56,6 +56,37 @@ parseMethod str = case str of
   s => OtherMethod s
 
 public export
+data Version
+  = Version_1_0
+  | Version_1_1
+  | Version_2
+  | OtherVersion String
+
+export
+Eq Version where
+  (==) Version_1_0 Version_1_0 = True
+  (==) Version_1_1 Version_1_1 = True
+  (==) Version_2 Version_2 = True
+  (==) (OtherVersion v1) (OtherVersion v2) = v1 == v2
+  (==) _ _ = False
+
+export
+Show Version where
+  show v = case v of
+    Version_1_0 => "1.0"
+    Version_1_1 => "1.1"
+    Version_2 => "2.0"
+    OtherVersion v => v
+
+export
+parseVersion : String -> Version
+parseVersion s = case s of
+  "1.0" => Version_1_0
+  "1.1" => Version_1_1
+  "2.0" => Version_2
+  v => OtherVersion v
+
+public export
 StringHeaders : Type
 StringHeaders = List (String, String)
 
@@ -70,11 +101,11 @@ implementation HasContentType StringHeaders where
 
 public export
 HttpRequest : Type -> Type -> Type -> Type
-HttpRequest p h a = Request Method p h a
+HttpRequest p h a = Request Method p Version h a
 
 export
-mkRequest : (m : Method) -> p -> h -> a -> HttpRequest p h a
-mkRequest m p h a = MkRequest m p h a
+mkRequest : (m : Method) -> p -> Version -> h -> a -> HttpRequest p h a
+mkRequest m p v h a = MkRequest m p v h a
 
 public export
 data Status

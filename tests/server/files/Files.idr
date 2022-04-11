@@ -21,8 +21,8 @@ sendError :
   => HasIO io
   => Status
   -> String
-  -> Context me u h1 s StringHeaders a b
-  -> io $ Context me u h1 Status StringHeaders a (Publisher IO e Buffer)
+  -> Context me u v h1 s StringHeaders a b
+  -> io $ Context me u v h1 Status StringHeaders a (Publisher IO e Buffer)
 sendError st str ctx = do
   text str ctx >>= status st
 

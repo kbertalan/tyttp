@@ -26,11 +26,11 @@ data FileServingError : Type where
 
 public export
 StaticRequest : (e : Type) -> Type -> Type
-StaticRequest e url = Context Method url StringHeaders Status StringHeaders (Publisher IO e Buffer) ()
+StaticRequest e url = Context Method url Version StringHeaders Status StringHeaders (Publisher IO e Buffer) ()
 
 public export
 StaticResponse : (e : Type) -> Type -> Type
-StaticResponse e url = Context Method url StringHeaders Status StringHeaders (Publisher IO e Buffer) (Publisher IO e Buffer)
+StaticResponse e url = Context Method url Version StringHeaders Status StringHeaders (Publisher IO e Buffer) (Publisher IO e Buffer)
 
 record StaticSuccesResult (e : Type) where
   constructor MkStaticSuccessResult

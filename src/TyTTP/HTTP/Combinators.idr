@@ -15,11 +15,11 @@ export
 unsafeConsumeBody : Error e
   => HasIO m
   => (
-    Context Method u h1 s h2 Buffer b
-    -> Promise e m $ Context Method u' h1' s' h2' a' b'
+    Context Method u v h1 s h2 Buffer b
+    -> Promise e m $ Context Method u' v' h1' s' h2' a' b'
   )
-  -> Context Method u h1 s h2 (Publisher m e Buffer) b
-  -> Promise e m $ Context Method u' h1' s' h2' a' b'
+  -> Context Method u v h1 s h2 (Publisher m e Buffer) b
+  -> Promise e m $ Context Method u' v' h1' s' h2' a' b'
 unsafeConsumeBody handler ctx = MkPromise $ \cb => do
   acc <- newIORef Lin
   let handlerCallbacks = MkCallbacks

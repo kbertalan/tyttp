@@ -34,7 +34,7 @@ toNodeResponse res nodeRes = do
 
 fromPromiseToNodeResponse : Error e
   => (e -> RawHttpResponse)
-  -> Promise e IO (Context Method String StringHeaders Status StringHeaders b $ Publisher IO NodeError Buffer)
+  -> Promise e IO (Context Method String Version StringHeaders Status StringHeaders b $ Publisher IO NodeError Buffer)
   -> ServerResponse
   -> IO ()
 fromPromiseToNodeResponse errorHandler (MkPromise cont) nodeRes =
@@ -49,7 +49,8 @@ fromNodeRequest nodeReq =
   let method = parseMethod nodeReq.method
       path = nodeReq.url
       headers = nodeReq.headers.asList
-  in HTTP.mkRequest method path headers $ MkPublisher $ \s => do
+      version = parseVersion nodeReq.httpVersion
+  in HTTP.mkRequest method path version headers $ MkPublisher $ \s => do
         nodeReq.onData s.onNext
         nodeReq.onError s.onFailed
         nodeReq.onEnd s.onSucceded
@@ -80,8 +81,8 @@ listen : HasIO io
    => HTTP
    -> ListenOptions e
    -> ( 
-    Context Method String StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-     -> Promise e IO $ Context Method String StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
+    Context Method String Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
+     -> Promise e IO $ Context Method String Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
   )
    -> io Server
 listen http options handler = do
@@ -103,8 +104,8 @@ listen' : HasIO io
    => { auto http : HTTP }
    -> { default defaultListenOptions options : ListenOptions e }
    -> ( 
-    Context Method String StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-     -> Promise e IO $ Context Method String StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
+    Context Method String Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
+     -> Promise e IO $ Context Method String Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
   )
    -> io Server
 listen' {http} {options} handler = listen http options handler

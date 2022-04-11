@@ -8,8 +8,8 @@ export
 text :
   Applicative m
   => String
-  -> Context me u h1 s StringHeaders a b
-  -> m $ Context me u h1 s StringHeaders a (Publisher IO e Buffer)
+  -> Context me u v h1 s StringHeaders a b
+  -> m $ Context me u v h1 s StringHeaders a (Publisher IO e Buffer)
 text str ctx = do
   let stream : Publisher IO e Buffer = Stream.singleton $ fromString str
   pure $ { response.body := stream
@@ -23,7 +23,7 @@ export
 status :
   Applicative m
   => Status
-  -> Context me u h1 s h2 a b
-  -> m $ Context me u h1 Status h2 a b
+  -> Context me u v h1 s h2 a b
+  -> m $ Context me u v h1 Status h2 a b
 status s ctx = pure $ { response.status := s } ctx
 

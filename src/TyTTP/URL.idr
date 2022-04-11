@@ -70,11 +70,11 @@ namespace Simple
   export
   parseUrl : MonadError URLParserError m
     => (
-      Context me SimpleURL h1 s h2 a b
-      -> m $ Context me' SimpleURL h1' s' h2' a' b'
+      Context me SimpleURL v h1 s h2 a b
+      -> m $ Context me' SimpleURL v' h1' s' h2' a' b'
     )
-    -> Context me String h1 s h2 a b
-    -> m $ Context me' String h1' s' h2' a' b'
+    -> Context me String v h1 s h2 a b
+    -> m $ Context me' String v' h1' s' h2' a' b'
   parseUrl handler ctx = case parse ctx.request.url of
     Right u => do
       result <- handler $ { request.url := u } ctx
@@ -85,15 +85,15 @@ namespace Simple
   parseUrl' : Monad m
     => (
       URLParserError
-      -> Context me String h1 s h2 a b
-      -> m $ Context me' String h1' s' h2' a' b'
+      -> Context me String v h1 s h2 a b
+      -> m $ Context me' String v' h1' s' h2' a' b'
     )
     -> (
-      Context me SimpleURL h1 s h2 a b
-      -> EitherT URLParserError m $ Context me' SimpleURL h1' s' h2' a' b'
+      Context me SimpleURL v h1 s h2 a b
+      -> EitherT URLParserError m $ Context me' SimpleURL v' h1' s' h2' a' b'
     )
-    -> Context me String h1 s h2 a b
-    -> m $ Context me' String h1' s' h2' a' b'
+    -> Context me String v h1 s h2 a b
+    -> m $ Context me' String v' h1' s' h2' a' b'
   parseUrl' errHandler handler ctx = do
     Right result <- runEitherT $ Simple.parseUrl handler ctx
       | Left err => errHandler err ctx
