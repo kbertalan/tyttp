@@ -12,8 +12,8 @@ import TyTTP.HTTP
 import TyTTP.HTTP.Combinators
 import TyTTP.URL
 
-hReflect : Context Method SimpleURL StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-  -> IO $ Context Method SimpleURL StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) (Publisher IO NodeError Buffer)
+hReflect : Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
+  -> IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) (Publisher IO NodeError Buffer)
 hReflect ctx = do
   let m = ctx.request.method
       h = ctx.request.headers

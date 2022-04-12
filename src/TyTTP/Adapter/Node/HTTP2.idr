@@ -61,7 +61,7 @@ sendResponse res stream = do
 
 sendResponseFromPromise : Error e
   => (String -> RawHttpResponse)
-  -> Promise e IO (Context Method SimpleURL StringHeaders Status StringHeaders b $ Publisher IO NodeError Buffer)
+  -> Promise e IO (Context Method SimpleURL Version StringHeaders Status StringHeaders b $ Publisher IO NodeError Buffer)
   -> ServerHttp2Stream
   -> IO ()
 sendResponseFromPromise errorHandler (MkPromise cont) stream =
@@ -81,7 +81,8 @@ parseRequest stream headers =
         | Nothing => Left "Path header is missing from request"
       (path, search) = String.break (=='?') pathAndSearch
       url = MkURL scheme authority path search
-  in Right $ HTTP.mkRequest method url headers.asList $ MkPublisher $ \s => do
+      version = Version_2
+  in Right $ HTTP.mkRequest method url version headers.asList $ MkPublisher $ \s => do
         stream.onData s.onNext
         stream.onError s.onFailed
         stream.onEnd s.onSucceded
@@ -112,8 +113,8 @@ listen : HasIO io
    => HTTP2
    -> ListenOptions
    -> ( 
-    Context Method SimpleURL StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-     -> Promise e IO $ Context Method SimpleURL StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
+    Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
+     -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
   )
    -> io Http2Server
 listen http options handler = do
@@ -136,8 +137,8 @@ listen' : HasIO io
    => { auto http : HTTP2 }
    -> { default defaultListenOptions options : ListenOptions }
    -> ( 
-    Context Method SimpleURL StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-     -> Promise e IO $ Context Method SimpleURL StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
+    Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
+     -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
   )
    -> io Http2Server
 listen' {http} {options} handler = listen http options handler
