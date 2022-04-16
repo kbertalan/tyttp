@@ -11,19 +11,19 @@ data Scheme
   | HTTPS
   | OtherScheme String
 
-public export
-parseScheme : String -> Scheme
-parseScheme s = case s of
-  "http" => HTTP
-  "https" => HTTPS
-  s => OtherScheme s
-
 namespace Scheme
   export
   parse : String -> Scheme
   parse "http" = HTTP
   parse "https" = HTTPS
   parse str = OtherScheme str
+
+  export
+  Show Scheme where
+    show s = case s of
+      HTTP => "http"
+      HTTPS => "https"
+      OtherScheme str => str
 
 public export
 record URL a p s where

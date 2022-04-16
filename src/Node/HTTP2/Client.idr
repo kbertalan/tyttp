@@ -39,7 +39,7 @@ namespace Stream
   onError : HasIO io => ClientHttp2Stream -> (a -> IO ()) -> io ()
   onError stream cb = primIO $ ffi_onError stream $ \e => toPrim $ cb e
 
-  %foreign "node:lambda: (ty, stream, end) => stream.on('end', end)"
+  %foreign "node:lambda: (stream, end) => stream.on('end', end)"
   ffi_onEnd : ClientHttp2Stream -> PrimIO () -> PrimIO ()
 
   export
@@ -52,6 +52,13 @@ namespace Stream
   export
   (.onResponse) : HasIO io => ClientHttp2Stream -> (Headers -> IO ()) -> io ()
   (.onResponse) stream cb = primIO $ ffi_onResponse stream $ \h => toPrim $ cb h
+
+  %foreign "node:lambda: (stream, handler) => stream.on('push', headers => handler(headers)())"
+  ffi_onPush : ClientHttp2Stream -> (Headers -> PrimIO ()) -> PrimIO ()
+
+  export
+  (.onPush) : HasIO io => ClientHttp2Stream -> (Headers -> IO ()) -> io ()
+  (.onPush) stream cb = primIO $ ffi_onPush stream $ \h => toPrim $ cb h
 
 namespace Session
 
@@ -67,11 +74,11 @@ namespace Session
   ffi_request : ClientHttp2Session -> String -> String -> Headers -> PrimIO ClientHttp2Stream
 
   export
-  (.get) : ClientHttp2Session -> String -> Headers -> IO ClientHttp2Stream
+  (.get) : HasIO io => ClientHttp2Session -> String -> Headers -> io ClientHttp2Stream
   (.get) session path headers = primIO $ ffi_request session "GET" path headers
 
   export
-  (.post) : ClientHttp2Session -> String -> Headers -> IO ClientHttp2Stream
+  (.post) : HasIO io => ClientHttp2Session -> String -> Headers -> io ClientHttp2Stream
   (.post) session path headers = primIO $ ffi_request session "POST" path headers
 
   %foreign "node:lambda: (session) => session.close()"
@@ -81,11 +88,18 @@ namespace Session
   (.close) : HasIO io => ClientHttp2Session -> io ()
   (.close) session = primIO $ ffi_close session
 
-%foreign """
-  node:lambda:
-  (http2, authority) =>
-    http2.connect(authority)
-  """
+  %foreign """
+    node:lambda:
+    (session, handler) =>
+      session.on('stream', (pushedStream, requestHeaders) => handler(pushedStream)(requestHeaders)())
+    """
+  ffi_onStream : ClientHttp2Session -> (ClientHttp2Stream -> Headers -> PrimIO ()) -> PrimIO ()
+
+  export
+  (.onStream) : HasIO io => ClientHttp2Session -> (ClientHttp2Stream -> Headers -> IO ()) -> io ()
+  (.onStream) session handler = primIO $ ffi_onStream session $ \stream, headers => toPrim $ handler stream headers
+
+%foreign "node:lambda: (http2, authority) => http2.connect(authority)"
 ffi_connect : HTTP2 -> String -> PrimIO ClientHttp2Session
 
 export

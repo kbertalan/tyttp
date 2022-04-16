@@ -24,3 +24,10 @@ export
 defer : HasIO io => IO () -> io ()
 defer action = primIO $ ffi_defer $ toPrim action
 
+%foreign "node:lambda: (ty, o) => !!o ? 1 : 0"
+ffi_exists : a -> Int
+
+export
+exists : a -> Bool
+exists a = 0 /= ffi_exists a
+
