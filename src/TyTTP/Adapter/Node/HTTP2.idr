@@ -49,8 +49,8 @@ public export
 PushContext : Type
 PushContext = Context Method SimpleURL Version StringHeaders Status StringHeaders () $ Publisher IO NodeError Buffer
 
-sendResponse : RawHttpResponse -> ServerHttp2Stream -> IO () -> IO ()
-sendResponse res stream closer = do
+sendResponse : RawHttpResponse -> ServerHttp2Stream -> IO ()
+sendResponse res stream = do
   let status = res.status.code
   headers <- mapHeaders res.headers status
 
@@ -58,7 +58,7 @@ sendResponse res stream closer = do
   res.body.subscribe $ MkSubscriber
         { onNext = \a => putStrLn (show a) >> stream.write a }
         { onFailed = \e => pure () }
-        { onSucceded = \_ => closer }
+        { onSucceded = \_ => stream.end }
   where
     mapHeaders : StringHeaders -> Int -> IO Headers
     mapHeaders h s = do
@@ -70,11 +70,10 @@ sendResponseFromPromise : Error e
   -> Promise e IO (Context Method SimpleURL Version StringHeaders Status StringHeaders b $ Publisher IO NodeError Buffer)
   -> ServerHttp2Stream
   -> IO ()
-  -> IO ()
-sendResponseFromPromise errorHandler (MkPromise cont) stream closer =
+sendResponseFromPromise errorHandler (MkPromise cont) stream =
   let callbacks = MkCallbacks
-        { onSucceded = \a => sendResponse a.response stream closer }
-        { onFailed = \e => sendResponse (errorHandler $ message e) stream stream.end }
+        { onSucceded = \a => sendResponse a.response stream }
+        { onFailed = \e => sendResponse (errorHandler $ message e) stream }
   in
     cont callbacks
 
@@ -94,21 +93,19 @@ parseRequest stream headers =
         stream.onError s.onFailed
         stream.onEnd s.onSucceded
 
-pusher : ServerHttp2Stream -> Lazy PushContext -> Promise NodeError IO ()
-pusher parent ctx = MkPromise $ \callbacks => do
+pusher : HasIO io => ServerHttp2Stream -> Lazy PushContext -> io ()
+pusher parent ctx = do
   reqHeaders <- mapHeaders $ ctx.request.headers
     <+> (maybe [] pure $ map ((show Fields.Scheme,) . show) ctx.request.url.scheme)
-    <+> (maybe [] pure $ map ((show Fields.Authority,) . show) ctx.request.url.authority)
+    <+> (maybe [] pure $ map (show Fields.Authority,) ctx.request.url.authority)
     <+> [ (show Fields.Method, show ctx.request.method)
-        , (show Fields.Path, show ctx.request.url.path)
+        , (show Fields.Path, ctx.request.url.path)
         ]
   parent.pushStream reqHeaders $ \err, stream, headers => do
-    if exists err then callbacks.onFailed err
-                  else sendResponse ctx.response stream $ do
-                    stream.end
-                    callbacks.onSucceded ()
+    if exists err then pure () -- log error
+                  else sendResponse ctx.response stream
     where
-      mapHeaders : HasIO io => StringHeaders -> io Headers
+      mapHeaders : StringHeaders -> io Headers
       mapHeaders h = do
         newHeaders <- empty
         foldlM (\hs, (k,v) => hs.setHeader k v) newHeaders h
@@ -135,11 +132,12 @@ defaultListenOptions = MkListenOptions
 
 export
 listen : HasIO io
+   => HasIO pushIO
    => Error e
    => HTTP2
    -> ListenOptions
    -> (
-        (Lazy PushContext -> Promise NodeError IO ())
+        (Lazy PushContext -> pushIO ())
         -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
         -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
       )
@@ -149,24 +147,25 @@ listen http options handler = do
 
   server.onStream $ \stream, headers => do
     let Right req = parseRequest stream headers
-          | Left err => sendResponse (options.errorHandler err) stream stream.end
+          | Left err => sendResponse (options.errorHandler err) stream
         initialRes = MkResponse OK [] () {h = StringHeaders}
         push = if stream.pushAllowed then pusher stream
                                      else const $ pure ()
         result = handler push $ MkContext req initialRes
 
-    sendResponseFromPromise options.errorHandler result stream stream.end
+    sendResponseFromPromise options.errorHandler result stream
 
   server.listen options.port
   pure server
 
 export
 listen' : HasIO io
+   => HasIO pushIO
    => Error e
    => { auto http : HTTP2 }
    -> { default defaultListenOptions options : ListenOptions }
    -> (
-        (Lazy PushContext -> Promise NodeError IO ())
+        (Lazy PushContext -> pushIO ())
         -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
         -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
       )

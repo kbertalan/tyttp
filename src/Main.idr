@@ -1,8 +1,6 @@
 module Main
 
 import Data.Buffer
-import Data.Buffer.Ext
-import Data.IORef
 import Control.Monad.Trans
 import Control.Monad.Either
 import Control.Monad.Maybe
@@ -22,13 +20,15 @@ import TyTTP.URL.Search
 import Node.HTTP2.Client
 import Node.Headers
 import Node
+import Data.IORef
+import Data.Buffer.Ext
 
 main : IO ()
 main = do
   http2 <- HTTP2.require
-  server <- HTTP2.listen' $ \push =>
+  server <- HTTP2.listen' {e = String} $ \push =>
       routes' (text "Resource could not be found" >=> status NOT_FOUND)
-        [ get $ Path.path "/query" $ \step =>
+        [ get $ path "/query" $ \step =>
             text step.request.url.search step >>= status OK
         , get $ path "/parsed" $ Simple.search $ \step =>
             text (show step.request.url.search) step >>= status OK
@@ -47,7 +47,7 @@ main = do
                   onEnd stream $ s.onSucceded ()
                   onError stream s.onFailed
               } ctx
-        , get $ Path.path "/push" $ \step => lift $ do
+        , get $ path "/push" :> \step => do
             push $ MkContext
               { request = MkRequest
                 { method = GET
@@ -68,7 +68,7 @@ main = do
   defer $ do
     session <- http2.connect "http://localhost:3000"
 
-    counter <- newIORef 1
+    counter <- newIORef 2
     let closer = do
       modifyIORef counter (\x => x-1)
       count <- readIORef counter
@@ -79,9 +79,9 @@ main = do
         server.close
 
     session.onStream $ \stream, headers => do
-      stream.onPush $ \headers => debugJsValue headers
+      stream.onPush $ \headers => putStrLn $ show headers.asList
       putStrLn "PUSH"
-      debugJsValue headers
+      putStrLn $ show headers.asList
       onData stream putStr
       onEnd stream closer
 
@@ -92,3 +92,6 @@ main = do
       onEnd stream closer
 
     stream.end
+
+    -- session.close
+    -- server.close

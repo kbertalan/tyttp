@@ -14,7 +14,7 @@ toJsonString a = ffi_toJsonString a
 ffi_debugJsValue : a -> PrimIO ()
 
 export
-debugJsValue : a -> IO ()
+debugJsValue : HasIO io => a -> io ()
 debugJsValue a = primIO $ ffi_debugJsValue a
 
 %foreign "node:lambda: cb => setTimeout(() => cb(), 0)"
