@@ -15,15 +15,34 @@ import TyTTP.URL
 import TyTTP.URL.Path
 import TyTTP.URL.Search
 
+import Node.HTTP.Client
+import Node
+
 main : IO ()
 main = do
   http <- HTTP.require
-  ignore $ HTTP.listen' {e = String} $
+  server <- HTTP.listen' {e = String} $
       decodeUri' (text "URI decode has failed" >=> status BAD_REQUEST)
       :> parseUrl' (const $ text "URL has invalid format" >=> status BAD_REQUEST)
       :> routes' (text "Resource could not be found" >=> status NOT_FOUND)
-          [ get $ path "/query" $ \step =>
-              text step.request.url.search step >>= status OK
-          , get $ path "/parsed" $ Simple.search $ \step =>
-              text (show step.request.url.search) step >>= status OK
+          [ get $ path "/query" $ \ctx =>
+              text ctx.request.url.search ctx >>= status OK
+          , get $ path "/parsed" $ Simple.search $ \ctx =>
+              text (show ctx.request.url.search) ctx >>= status OK
+          , get $ path "/request" $ \ctx =>
+              pure $
+                { response.status := OK
+                , response.body := MkPublisher $ \s => do
+                    putStrLn "Calling http"
+                    ignore $ http.get "http://localhost:3000/parsed?q=from-request" $ \res => do
+                      putStrLn "Got response"
+                      onData res s.onNext
+                      onEnd res s.onSucceded
+                } ctx
           ]
+
+  putStrLn "Calling from main thread"
+  ignore $ http.get "http://localhost:3000/request" $ \res => do
+    putStrLn "response"
+    onData res putStrLn
+    server.close
