@@ -32,7 +32,7 @@ namespace Response
 
   export
   %foreign "node:lambda: res => res.statusCode"
-  (.statusCode) : IncomingMessage -> String
+  (.statusCode) : IncomingMessage -> Int
 
   %foreign "node:lambda: (ty, res, data) => res.on('data', a => data(a)())"
   ffi_onData : IncomingMessage -> (a -> PrimIO ()) -> PrimIO ()
@@ -48,7 +48,7 @@ namespace Response
   onError : HasIO io => IncomingMessage -> (a -> IO ()) -> io ()
   onError res cb = primIO $ ffi_onError res $ \e => toPrim $ cb e
 
-  %foreign "node:lambda: (ty, res, end) => res.on('end', end)"
+  %foreign "node:lambda: (res, end) => res.on('end', end)"
   ffi_onEnd : IncomingMessage -> PrimIO () -> PrimIO ()
 
   export
