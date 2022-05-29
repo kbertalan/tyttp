@@ -32,7 +32,7 @@ namespace Response
 
   export
   %foreign "node:lambda: res => res.statusCode"
-  (.statusCode) : IncomingMessage -> String
+  (.statusCode) : IncomingMessage -> Int
 
   %foreign "node:lambda: (ty, res, data) => res.on('data', a => data(a)())"
   ffi_onData : IncomingMessage -> (a -> PrimIO ()) -> PrimIO ()
