@@ -35,6 +35,8 @@ depends = base
   , apache-mime-types
   , contrib
 
+opts      = "--codegen node"
+
 sourcedir = "src"
 
 main = Main
