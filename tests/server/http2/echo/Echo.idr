@@ -20,16 +20,16 @@ hReflect ctx = do
       p : Publisher IO NodeError Buffer = MkPublisher $ \s => do
         s.onNext $ fromString "method -> \{show m}\n"
         s.onNext $ fromString "path -> \{ctx.request.url.path}\n"
-        s.onNext "headers ->\n"
+        s.onNext $ fromString "headers ->\n"
         for_ h $ \v => s.onNext $ fromString "\t\{fst v} : \{snd v}\n"
-        s.onNext "body ->\n"
+        s.onNext $ fromString "body ->\n"
         ctx.request.body.subscribe s
   pure $ { response.body := p } ctx
 
 main : IO ()
 main = do
   http2 <- require
-  server <- HTTP2.listen' { e = NodeError } :> hReflect
+  server <- HTTP2.listen' { e = NodeError, pushIO = IO } $ \_, ctx => lift $ hReflect ctx
 
   defer $ do
     session <- http2.connect "http://localhost:3000"
@@ -44,7 +44,7 @@ main = do
     stream <- session.post "/the/resource" =<< Headers.empty 
     stream.onResponse $ \headers => do
       putStrLn "POST"
-      onData stream putStr
+      onData stream $ putStr
       session.close
       server.close
 

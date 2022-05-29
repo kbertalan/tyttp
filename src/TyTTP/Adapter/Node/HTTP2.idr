@@ -56,7 +56,7 @@ sendResponse res stream = do
 
   stream.respond headers
   res.body.subscribe $ MkSubscriber
-        { onNext = \a => putStrLn (show a) >> stream.write a }
+        { onNext = \a => stream.write a }
         { onFailed = \e => pure () }
         { onSucceded = \_ => stream.end }
   where
