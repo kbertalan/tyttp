@@ -38,6 +38,7 @@ main = do
               session <- http2.connect "http://localhost:3000"
               stream <- session.get "/parsed?q=from-request" =<< empty
               stream.onResponse $ \headers => cb.onSucceded (headers, stream)
+              onError stream $ \error => cb.onFailed error
 
             pure $
               { response.status := OK
