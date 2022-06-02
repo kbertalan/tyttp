@@ -9,6 +9,8 @@ data ClientHttp2Session : Type where [external]
 export
 data ClientHttp2Stream : Type where [external]
 
+data NodeConnectOptions : Type where [external]
+
 namespace Stream
 
   %foreign "node:lambda: stream => stream.end()"
@@ -99,10 +101,39 @@ namespace Session
   (.onStream) : HasIO io => ClientHttp2Session -> (ClientHttp2Stream -> Headers -> IO ()) -> io ()
   (.onStream) session handler = primIO $ ffi_onStream session $ \stream, headers => toPrim $ handler stream headers
 
-%foreign "node:lambda: (http2, authority) => http2.connect(authority)"
-ffi_connect : HTTP2 -> String -> PrimIO ClientHttp2Session
+namespace Connect
+
+  public export
+  record Options where
+    constructor MkOptions
+    ca : String
+    rejectUnauthorized : Bool
+
+  export
+  defaultOptions : Options
+  defaultOptions = MkOptions
+    { ca = ""
+    , rejectUnauthorized = True
+    }
+
+%foreign "node:lambda: (http2, authority, connectOptions) => http2.connect(authority, connectOptions)"
+ffi_connect : HTTP2 -> String -> NodeConnectOptions -> PrimIO ClientHttp2Session
+
+%foreign """
+  node:lambda:
+  (ca, rejectUnauthorized) => ({
+    ca: ca || undefined,
+    rejectUnauthorized: rejectUnauthorized != 0
+  })
+  """
+ffi_nodeConnectOptions : String -> Int -> NodeConnectOptions
 
 export
-(.connect) : HTTP2 -> String -> IO ClientHttp2Session
-(.connect) http2 authority = primIO $ ffi_connect http2 authority
+(.connect) : HTTP2 -> String -> Connect.Options -> IO ClientHttp2Session
+(.connect) http2 authority connectOptions = primIO $ ffi_connect http2 authority $ convertOptions connectOptions
+  where
+    convertOptions : Connect.Options -> NodeConnectOptions
+    convertOptions (MkOptions ca rejectUnauthorized)
+      = ffi_nodeConnectOptions ca
+          (if rejectUnauthorized then 1 else 0)
 

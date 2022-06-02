@@ -78,6 +78,19 @@ export
 (.createServer) : HasIO io => HTTP2 -> io Http2Server
 (.createServer) http2 = primIO $ ffi_createServer http2
 
+%foreign """
+  node:lambda:
+  (http2, key, cert) =>
+    http2.createSecureServer({
+      key, cert
+    })
+  """
+ffi_createSecureServer : HTTP2 -> String -> String -> PrimIO Http2Server
+
+export
+(.createSecureServer) : HasIO io => HTTP2 -> String -> String -> io Http2Server
+(.createSecureServer) http2 key cert = primIO $ ffi_createSecureServer http2 key cert
+
 %foreign "node:lambda: (server, handler) => server.on('stream', (stream, headers) => handler(stream)(headers)())"
 ffi_onStream : Http2Server -> (ServerHttp2Stream -> Headers -> PrimIO ()) -> PrimIO ()
 

@@ -12,6 +12,8 @@ import TyTTP.URL
 import public TyTTP.Adapter.Node.Error
 import TyTTP.HTTP as HTTP
 
+import Node
+
 namespace Fields
 
   public export
@@ -102,7 +104,7 @@ pusher parent ctx = do
         , (show Fields.Path, ctx.request.url.path)
         ]
   parent.pushStream reqHeaders $ \err, stream, headers => do
-    if exists err then pure () -- log error
+    if exists err then putStrLn "ERROR" >> debugJsValue err
                   else sendResponse ctx.response stream
     where
       mapHeaders : StringHeaders -> io Headers
@@ -171,3 +173,55 @@ listen' : HasIO io
       )
    -> io Http2Server
 listen' {http} {options} handler = listen http options handler
+
+namespace Secure
+
+  public export
+  record SecureOptions where
+    constructor MkSecureOptions
+    cert: String
+    key: String
+
+  export
+  secureListen : HasIO io
+     => HasIO pushIO
+     => Error e
+     => HTTP2
+     -> SecureOptions
+     -> ListenOptions
+     -> (
+          (Lazy PushContext -> pushIO ())
+          -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
+          -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
+        )
+     -> io Http2Server
+  secureListen http secureOptions options handler = do
+    server <- http.createSecureServer secureOptions.cert secureOptions.key
+
+    server.onStream $ \stream, headers => do
+      let Right req = parseRequest stream headers
+            | Left err => sendResponse (options.errorHandler err) stream
+          initialRes = MkResponse OK [] () {h = StringHeaders}
+          push = if stream.pushAllowed then pusher stream
+                                       else const $ pure ()
+          result = handler push $ MkContext req initialRes
+
+      sendResponseFromPromise options.errorHandler result stream
+
+    server.listen options.port
+    pure server
+
+  export
+  secureListen' : HasIO io
+     => HasIO pushIO
+     => Error e
+     => { auto http : HTTP2 }
+     -> SecureOptions
+     -> { default defaultListenOptions options : ListenOptions }
+     -> (
+          (Lazy PushContext -> pushIO ())
+          -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
+          -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
+        )
+     -> io Http2Server
+  secureListen' {http} secureOptions {options} handler = secureListen http secureOptions options handler
