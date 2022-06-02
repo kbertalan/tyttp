@@ -1,0 +1,10 @@
+1/1: Building Push (Push.idr)
+PUSH
+[(":scheme", "http"), (":authority", "localhost:3000"), (":method", "GET"), (":path", "/pushed.txt")]
+GET
+[(":status", ""), ("content-type", "text/plain")]
+this is the response
+close counter is at 1
+this is pushed
+close counter is at 0
+closing session and server
