@@ -5,6 +5,11 @@ codegen=node
 
 .PHONY: build dist clean repl
 
+KEY_FILE=./certs/key.pem
+CERT_FILE=./certs/cert.pem
+
+export KEY_FILE CERT_FILE
+
 build:
 	bash -c 'time $(idris2) --build $(package) --codegen $(codegen)'
 
