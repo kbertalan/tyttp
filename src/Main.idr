@@ -1,6 +1,7 @@
 module Main
 
 import Data.Buffer
+import Data.IORef
 import Control.Monad.Trans
 import Control.Monad.Maybe
 import Node.HTTP2.Client
@@ -19,12 +20,14 @@ main : IO ()
 main = do
   Just keyFile <- getEnv "KEY_FILE"
     | Nothing => putStrLn "Environment variable \"KEY_FILE\" is not set"
-  Just certFile <- getEnv "CERT_FILE"
-    | Nothing => putStrLn "environment variable \"CERT_FILE\" is not set"
   Right key <- readFile keyFile
     | Left e => putStrLn "Could not read file \{keyFile}, reason: \{show e}"
+
+  Just certFile <- getEnv "CERT_FILE"
+    | Nothing => putStrLn "environment variable \"CERT_FILE\" is not set"
   Right cert <- readFile certFile
     | Left e => putStrLn "Could not read file \{certFile}, reason: \{show e}"
+
   let secureOptions = MkSecureOptions key cert
 
   http2 <- HTTP2.require
@@ -38,11 +41,13 @@ main = do
             putStrLn "Calling https"
             (headers, stream) <- MkPromise $ \cb => do
               session <- http2.connect "https://localhost:3000" $ {
-                  rejectUnauthorized := True
+                  rejectUnauthorized := False -- allow self-signed certificates
                 } Connect.defaultOptions
               stream <- session.get "/parsed?q=from-request" =<< empty
               stream.onResponse $ \headers => cb.onSucceded (headers, stream)
-              onError stream $ \error => cb.onFailed error
+              errorHandler <- first $ \error => cb.onFailed $ Node.Error.message error
+              onError stream errorHandler
+              (Session.(.onError)) session errorHandler
 
             pure $
               { response.status := OK
@@ -53,4 +58,13 @@ main = do
                   onError stream s.onFailed
               } ctx
         ]
+
+  where
+    first : HasIO io => (a -> io ()) -> io (a -> io ())
+    first cb = do
+      isFirst <- newIORef True
+      pure $ \a => do
+        when !(readIORef isFirst) $ do
+          writeIORef isFirst False
+          cb a
 

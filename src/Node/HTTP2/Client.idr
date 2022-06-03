@@ -1,5 +1,6 @@
 module Node.HTTP2.Client
 
+import public Node.Error
 import public Node.HTTP2
 import public Node.Headers
 
@@ -34,11 +35,11 @@ namespace Stream
   onData : HasIO io => ClientHttp2Stream -> (a -> IO ()) -> io ()
   onData stream cb = primIO $ ffi_onData stream $ \a => toPrim $ cb a
 
-  %foreign "node:lambda: (ty, stream, error) => stream.on('error', e => error(e)())"
-  ffi_onError : ClientHttp2Stream -> (e -> PrimIO ()) -> PrimIO ()
+  %foreign "node:lambda: (stream, error) => stream.on('error', e => error(e)())"
+  ffi_onError : ClientHttp2Stream -> (NodeError -> PrimIO ()) -> PrimIO ()
 
   export
-  onError : HasIO io => ClientHttp2Stream -> (a -> IO ()) -> io ()
+  onError : HasIO io => ClientHttp2Stream -> (NodeError -> IO ()) -> io ()
   onError stream cb = primIO $ ffi_onError stream $ \e => toPrim $ cb e
 
   %foreign "node:lambda: (stream, end) => stream.on('end', end)"
@@ -100,6 +101,13 @@ namespace Session
   export
   (.onStream) : HasIO io => ClientHttp2Session -> (ClientHttp2Stream -> Headers -> IO ()) -> io ()
   (.onStream) session handler = primIO $ ffi_onStream session $ \stream, headers => toPrim $ handler stream headers
+
+  %foreign "node:lambda: (session, error) => session.on('error', e => error(e)())"
+  ffi_onError : ClientHttp2Session -> (NodeError -> PrimIO ()) -> PrimIO ()
+
+  export
+  (.onError) : HasIO io => ClientHttp2Session -> (NodeError -> IO ()) -> io ()
+  (.onError) session cb = primIO $ ffi_onError session $ \e => toPrim $ cb e
 
 namespace Connect
 

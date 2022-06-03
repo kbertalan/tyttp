@@ -3,10 +3,11 @@ executable=tyttp
 idris2=idris2
 codegen=node
 
-.PHONY: build dist clean repl
+.PHONY: build dist clean repl run install test-clean test-build test dev dev-build dev-test
 
 KEY_FILE=./certs/key.pem
 CERT_FILE=./certs/cert.pem
+CA_FILE=./certs/ca-cert.pem
 
 export KEY_FILE CERT_FILE
 
@@ -23,10 +24,14 @@ clean:
 repl:
 	rlwrap $(idris2) --repl $(package) --codegen $(codegen)
 
-$(KEY_FILE):
+certs:
 	mkdir ./certs
+
+$(CA_FILE): certs
 	openssl genrsa 2048 > ./certs/ca-key.pem
-	openssl req -new -x509 -nodes -days 365000 -key ./certs/ca-key.pem -out ./certs/ca-cert.pem
+	openssl req -new -x509 -nodes -days 365000 -key ./certs/ca-key.pem -out $(CA_FILE)
+
+$(KEY_FILE): $(CA_FILE)
 	openssl req -newkey rsa:2048 -nodes -days 365000 -keyout $(KEY_FILE) -out ./certs/server-req.pem
 
 $(CERT_FILE): $(KEY_FILE)
