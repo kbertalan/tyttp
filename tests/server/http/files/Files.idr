@@ -51,7 +51,7 @@ main = eitherT putStrLn pure $ do
   server <- HTTP.listen' $ routeDef "\{folder}/"
 
   defer $ ignore $ http.get "http://localhost:3000/static/run" $ \res => do
-      putStrLn res.statusCode
+      putStrLn $ show res.statusCode
       onData res putStrLn
       server.close
 

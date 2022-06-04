@@ -2,6 +2,7 @@ module Node.HTTP.Server
 
 import public Node.HTTP
 import public Node.Headers
+import public Node.Net.Server
 
 export
 data IncomingMessage : Type where [external]
@@ -71,15 +72,73 @@ namespace Response
   (.writeHead) : HasIO io => ServerResponse -> Int -> Headers -> io ()
   (.writeHead) res status headers = primIO $ ffi_writeHead res status headers
 
+public export
+record Options where
+  constructor MkOptions
+  insecureHTTPParser: Bool
+  maxHeaderSize: Int
+  noDelay: Bool
+  keepAlive: Bool
+  keepAliveInitialDelay: Int
+
+export
+defaultOptions : HTTP.Server.Options
+defaultOptions = MkOptions
+  { insecureHTTPParser = False
+  , maxHeaderSize = 16384
+  , noDelay = False
+  , keepAlive = False
+  , keepAliveInitialDelay = 0
+  }
+
+data NodeHTTPServerOptions : Type where [external]
+
+%foreign """
+  node:lambda:
+  ( insecureHTTPParser
+  , maxHeaderSize
+  , noDelay
+  , keepAlive
+  , keepAliveInitialDelay
+  ) => ({
+    insecureHTTPParser: insecureHTTPParser != 0,
+    maxHeaderSize,
+    noDelay: noDelay != 0,
+    keepAlive: keepAlive != 0,
+    keepAliveInitialDelay
+  })
+  """
+ffi_convertOptions :
+  (insecureHTTPParser: Int) ->
+  (maxHeaderSize: Int ) ->
+  (noDelay: Int) ->
+  (keepAlive: Int) ->
+  (keepAliveInitialDelay: Int) ->
+  NodeHTTPServerOptions
+
+export
+convertOptions : HTTP.Server.Options -> NodeHTTPServerOptions
+convertOptions o = ffi_convertOptions
+  (boolToInt o.insecureHTTPParser)
+  o.maxHeaderSize
+  (boolToInt o.noDelay)
+  (boolToInt o.keepAlive)
+  o.keepAliveInitialDelay
+  where
+    boolToInt : Bool -> Int
+    boolToInt = \case
+      True => 1
+      False => 0
+
 export
 data Server : Type where [external]
 
-%foreign "node:lambda: http => http.createServer()"
-ffi_createServer : HTTP -> PrimIO Server
+%foreign "node:lambda: (http, options) => http.createServer(options)"
+ffi_createServer : HTTP -> NodeHTTPServerOptions -> PrimIO Server
 
 export
-(.createServer) : HasIO io => HTTP -> io Server
-(.createServer) http = primIO $ ffi_createServer http
+(.createServer) : HasIO io => HTTP -> HTTP.Server.Options -> io Server
+(.createServer) http options = primIO $ ffi_createServer http $ convertOptions options
 
 %foreign "node:lambda: (server, handler) => server.on('request', (req, res) => handler(req)(res)())"
 ffi_onRequest : Server -> (IncomingMessage -> ServerResponse -> PrimIO ()) -> PrimIO ()
@@ -90,12 +149,13 @@ export
   let primCallback = \req => \res => toPrim $ callback req res
   in primIO $ ffi_onRequest server primCallback
 
-%foreign "node:lambda: (server, port) => server.listen(port)"
-ffi_listen : Server -> Int -> PrimIO ()
+
+%foreign "node:lambda: (server, options) => server.listen(options)"
+ffi_listen : Server -> NodeListenOptions -> PrimIO ()
 
 export
-(.listen) : HasIO io => Server -> Int -> io ()
-(.listen) server port = primIO $ ffi_listen server port
+(.listen) : HasIO io => Server -> Listen.Options -> io ()
+(.listen) server options = primIO $ ffi_listen server $ convertOptions options
 
 %foreign "node:lambda: server => server.close()"
 ffi_close : Server -> PrimIO ()

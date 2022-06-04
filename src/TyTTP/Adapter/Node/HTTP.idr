@@ -56,15 +56,20 @@ fromNodeRequest nodeReq =
         nodeReq.onEnd s.onSucceded
 
 public export
-record ListenOptions e where
-  constructor MkListenOptions
-  port : Int
+record Options e where
+  constructor MkOptions
+  listenOptions : Listen.Options
+  serverOptions : HTTP.Server.Options
   errorHandler : (e -> RawHttpResponse)
 
 export
-defaultListenOptions : Error e => ListenOptions e
-defaultListenOptions = MkListenOptions
-  { port = 3000
+defaultOptions : Error e => Options e
+defaultOptions = MkOptions
+  { serverOptions = HTTP.Server.defaultOptions
+  , listenOptions =
+    { port := Just 3000
+    , host := Just "localhost"
+    } Listen.defaultOptions
   , errorHandler = \e => MkResponse
     { status = INTERNAL_SERVER_ERROR
     , headers =
@@ -79,14 +84,14 @@ export
 listen : HasIO io
    => Error e
    => HTTP
-   -> ListenOptions e
+   -> Options e
    -> ( 
     Context Method String Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
      -> Promise e IO $ Context Method String Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
   )
    -> io Server
 listen http options handler = do
-  server <- http.createServer
+  server <- http.createServer options.serverOptions
 
   server.onRequest $ \req => \res => do
     let handlerReq = fromNodeRequest req
@@ -95,17 +100,16 @@ listen http options handler = do
 
     fromPromiseToNodeResponse options.errorHandler result res
 
-  server.listen options.port
+  server.listen options.listenOptions
   pure server
 
 export
 listen' : HasIO io
    => Error e
    => { auto http : HTTP }
-   -> { default defaultListenOptions options : ListenOptions e }
    -> ( 
     Context Method String Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
      -> Promise e IO $ Context Method String Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
   )
    -> io Server
-listen' {http} {options} handler = listen http options handler
+listen' {http} handler = listen http defaultOptions handler

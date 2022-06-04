@@ -32,7 +32,7 @@ main = do
   server <- HTTP2.listen' { e = NodeError, pushIO = IO } $ \_, ctx => lift $ hReflect ctx
 
   defer $ do
-    session <- http2.connect "http://localhost:3000"
+    session <- http2.connect "http://localhost:3000" defaultOptions
     stream <- session.get "/" =<< Headers.empty
     stream.onResponse $ \headers => do
       putStrLn "GET"
@@ -40,7 +40,7 @@ main = do
       session.close
 
   defer $ do
-    session <- http2.connect "http://localhost:3000"
+    session <- http2.connect "http://localhost:3000" defaultOptions
     stream <- session.post "/the/resource" =<< Headers.empty 
     stream.onResponse $ \headers => do
       putStrLn "POST"

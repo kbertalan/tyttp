@@ -39,7 +39,7 @@ main = do
         ]
 
   defer $ do
-    session <- http2.connect "http://localhost:3000"
+    session <- http2.connect "http://localhost:3000" defaultOptions
 
     counter <- newIORef 2
     let closer = do

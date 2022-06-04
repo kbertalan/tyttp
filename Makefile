@@ -46,7 +46,7 @@ install:
 test-clean:
 	make -C tests clean
 
-test-build:
+test-build: install
 	make -C tests build
 
 test: test-build
@@ -59,5 +59,5 @@ dev-build:
 	find src/ -name *.idr | entr make build
 
 dev-test:
-	find tests/ -name *.idr | INTERACTIVE="" entr make test
+	find . -name *.idr | INTERACTIVE="" entr make test
 

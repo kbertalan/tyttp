@@ -40,7 +40,7 @@ main = do
         , get $ path "/request" :> \ctx => do
             putStrLn "Calling https"
             (headers, stream) <- MkPromise $ \cb => do
-              session <- http2.connect "https://localhost:3000" $ {
+              session <- http2.connect "https://localhost:3443" $ {
                   rejectUnauthorized := False -- allow self-signed certificates
                 } Connect.defaultOptions
               stream <- session.get "/parsed?q=from-request" =<< empty

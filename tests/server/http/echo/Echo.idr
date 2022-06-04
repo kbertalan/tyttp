@@ -34,13 +34,13 @@ main = do
   defer $ do
     ignore $ http.get "http://localhost:3000" $ \res => do
       putStrLn "GET"
-      putStrLn res.statusCode
+      putStrLn $ show res.statusCode
       onData res putStrLn
 
   defer $ do
     clientReq <- http.post "http://localhost:3000/the/resource" $ \res => do
       putStrLn "POST"
-      putStrLn res.statusCode
+      putStrLn $ show res.statusCode
       onData res putStrLn
       server.close
 

@@ -12,8 +12,6 @@ import TyTTP.URL
 import public TyTTP.Adapter.Node.Error
 import TyTTP.HTTP as HTTP
 
-import Node
-
 namespace Fields
 
   public export
@@ -113,15 +111,22 @@ pusher parent ctx = do
         foldlM (\hs, (k,v) => hs.setHeader k v) newHeaders h
 
 public export
-record ListenOptions where
-  constructor MkListenOptions
-  port : Int
-  errorHandler : (String -> RawHttpResponse)
+record Options where
+  constructor MkOptions
+  netServerOptions : Net.Server.Options
+  serverOptions : HTTP2.Server.Options
+  listenOptions : Listen.Options
+  errorHandler : String -> RawHttpResponse
 
 export
-defaultListenOptions : ListenOptions
-defaultListenOptions = MkListenOptions
-  { port = 3000
+defaultOptions : HTTP2.Options
+defaultOptions = MkOptions
+  { netServerOptions = Net.Server.defaultOptions
+  , serverOptions = HTTP2.Server.defaultOptions
+  , listenOptions =
+    { port := Just 3000
+    , host := Just "localhost"
+    } Listen.defaultOptions
   , errorHandler = \e => MkResponse
     { status = INTERNAL_SERVER_ERROR
     , headers =
@@ -137,15 +142,15 @@ listen : HasIO io
    => HasIO pushIO
    => Error e
    => HTTP2
-   -> ListenOptions
+   -> HTTP2.Options
    -> (
         (Lazy PushContext -> pushIO ())
         -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
         -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
       )
    -> io Http2Server
-listen http options handler = do
-  server <- http.createServer
+listen http2 options handler = do
+  server <- http2.createServer options.netServerOptions options.serverOptions
 
   server.onStream $ \stream, headers => do
     let Right req = parseRequest stream headers
@@ -157,22 +162,21 @@ listen http options handler = do
 
     sendResponseFromPromise options.errorHandler result stream
 
-  server.listen options.port
+  server.listen options.listenOptions
   pure server
 
 export
 listen' : HasIO io
    => HasIO pushIO
    => Error e
-   => { auto http : HTTP2 }
-   -> { default defaultListenOptions options : ListenOptions }
+   => { auto http2 : HTTP2 }
    -> (
         (Lazy PushContext -> pushIO ())
         -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
         -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
       )
    -> io Http2Server
-listen' {http} {options} handler = listen http options handler
+listen' {http2} handler = listen http2 defaultOptions handler
 
 namespace Secure
 
@@ -188,7 +192,7 @@ namespace Secure
      => Error e
      => HTTP2
      -> SecureOptions
-     -> ListenOptions
+     -> HTTP2.Options
      -> (
           (Lazy PushContext -> pushIO ())
           -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
@@ -208,20 +212,19 @@ namespace Secure
 
       sendResponseFromPromise options.errorHandler result stream
 
-    server.listen options.port
+    server.listen options.listenOptions
     pure server
 
   export
   secureListen' : HasIO io
      => HasIO pushIO
      => Error e
-     => { auto http : HTTP2 }
+     => { auto http2 : HTTP2 }
      -> SecureOptions
-     -> { default defaultListenOptions options : ListenOptions }
      -> (
           (Lazy PushContext -> pushIO ())
           -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
           -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
         )
      -> io Http2Server
-  secureListen' {http} secureOptions {options} handler = secureListen http secureOptions options handler
+  secureListen' {http2} secureOptions handler = secureListen http2 secureOptions defaultOptions handler

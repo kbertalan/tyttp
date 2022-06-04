@@ -1,8 +1,10 @@
 module Node.HTTP2.Server
 
+import Data.Maybe
 import public Node.Error
 import public Node.HTTP2
 import public Node.Headers
+import public Node.Net.Server
 
 export
 data ServerHttp2Stream : Type where [external]
@@ -68,15 +70,202 @@ namespace Stream
   (.pushStream) : HasIO io => ServerHttp2Stream -> Headers -> (NodeError -> ServerHttp2Stream -> Headers -> IO ()) -> io ()
   (.pushStream) stream headers callback = primIO $ ffi_pushStream stream headers $ \err, str, hs => toPrim $ callback err str hs
 
+public export
+data PaddingStrategy
+  = None
+  | Max
+  | Aligned
+
+export
+data NodePaddingStrategy : Type where [external]
+
+%foreign "node:lambda: (http2) => http2.constants.PADDING_STRATEGY_NONE"
+ffi_paddingStrategy_None : {auto http2 : HTTP2} -> NodePaddingStrategy
+
+%foreign "node:lambda: (http2) => http2.constants.PADDING_STRATEGY_MAX"
+ffi_paddingStrategy_Max : {auto http2 : HTTP2} -> NodePaddingStrategy
+
+%foreign "node:lambda: (http2) => http2.constants.PADDING_STRATEGY_ALIGNED"
+ffi_paddingStrategy_Aligned : {auto http2 : HTTP2} -> NodePaddingStrategy
+
+export
+convertPaddingStrategy : {auto http2 : HTTP2} -> PaddingStrategy -> NodePaddingStrategy
+convertPaddingStrategy = \case
+  None => ffi_paddingStrategy_None
+  Max => ffi_paddingStrategy_Max
+  Aligned => ffi_paddingStrategy_Aligned
+
+public export
+record Settings where
+  constructor MkSettings
+  headerTableSize: Int
+  enablePush: Bool
+  initialWindowSize: Int
+  maxFrameSize: Int
+  maxConcurrentStreams: Double
+  maxHeaderListSize: Int
+  enableConnectProtocol: Bool
+
+export
+defaultSettings : Settings
+defaultSettings = MkSettings
+  { headerTableSize = 4096
+  , enablePush = True
+  , initialWindowSize = 65535
+  , maxFrameSize = 16384
+  , maxConcurrentStreams = 4294967295.0
+  , maxHeaderListSize = 65535
+  , enableConnectProtocol = False
+  }
+
+export
+data NodeHTTP2Settings : Type where [external]
+
+%foreign """
+  node:lambda:
+  ( headerTableSize
+  , enablePush
+  , initialWindowSize
+  , maxFrameSize
+  , maxConcurrentStreams
+  , maxHeaderListSize
+  , enableConnectProtocol
+  ) => ({
+    headerTableSize,
+    enablePush: !!enablePush && undefined, // -- TODO check why value true not accepted?
+    initialWindowSize,
+    maxFrameSize,
+    maxConcurrentStreams,
+    maxHeaderListSize,
+    enableConnectProtocol: enableConnectProtocol != 0
+  })
+  """
+ffi_convertSettings :
+  (headerTableSize: Int) ->
+  (enablePush: Int) ->
+  (initialWindowSize: Int) ->
+  (maxFrameSize: Int) ->
+  (maxConcurrentStreams: Double) ->
+  (maxHeaderListSize: Int) ->
+  (enableConnectProtocol: Int) ->
+  NodeHTTP2Settings
+
+export
+convertSettings : Settings -> NodeHTTP2Settings
+convertSettings s = ffi_convertSettings
+  s.headerTableSize
+  (if s.enablePush then 1 else 0)
+  s.initialWindowSize
+  s.maxFrameSize
+  s.maxConcurrentStreams
+  s.maxHeaderListSize
+  (if s.enableConnectProtocol then 1 else 0)
+
+public export
+record Options where
+  constructor MkOptions
+  maxDeflateDynamicTableSize: Int
+  maxSettings: Int
+  maxSessionMemory: Int
+  maxHeaderListPairs: Int
+  maxOutstandingPings: Int
+  maxSendHeaderBlockLength: Maybe Int
+  paddingStrategy: PaddingStrategy
+  peerMaxConcurrentStreams: Int
+  maxSessionInvalidFrames: Int 
+  maxSessionRejectedStreams: Int
+  settings: Settings
+  unknownProtocolTimeout: Int
+
+export
+defaultOptions : HTTP2.Server.Options
+defaultOptions = MkOptions
+  { maxDeflateDynamicTableSize = 4096
+  , maxSettings = 32
+  , maxSessionMemory = 10
+  , maxHeaderListPairs = 128
+  , maxOutstandingPings = 10
+  , maxSendHeaderBlockLength = Nothing
+  , paddingStrategy = None
+  , peerMaxConcurrentStreams = 100
+  , maxSessionInvalidFrames = 1000
+  , maxSessionRejectedStreams = 100
+  , settings = defaultSettings
+  , unknownProtocolTimeout = 10000
+  }
+
+export
+data NodeHTTP2ServerOptions : Type where [external]
+
+%foreign """
+  node:lambda:
+  ( maxDeflateDynamicTableSize
+  , maxSettings
+  , maxSessionMemory
+  , maxHeaderListPairs
+  , maxOutstandingPings
+  , maxSendHeaderBlockLength
+  , paddingStrategy
+  , peerMaxConcurrentStreams
+  , maxSessionInvalidFrames
+  , maxSessionRejectedStreams
+  , settings
+  , unknownProtocolTimeout
+  ) => ({
+    maxDeflateDynamicTableSize,
+    maxSettings,
+    maxSessionMemory,
+    maxHeaderListPairs,
+    maxOutstandingPings,
+    maxSendHeaderBlockLength: maxSendHeaderBlockLength != -1 ? maxSendHeaderBlockLength : undefined,
+    paddingStrategy,
+    peerMaxConcurrentStreams,
+    maxSessionInvalidFrames,
+    maxSessionRejectedStreams,
+    settings,
+    unknownProtocolTimeout
+  })
+  """
+ffi_convertOptions :
+  (maxDeflateDynamicTableSize: Int) ->
+  (maxSettings: Int) ->
+  (maxSessionMemory: Int) ->
+  (maxHeaderListPairs: Int) ->
+  (maxOutstandingPings: Int) ->
+  (maxSendHeaderBlockLength: Int) ->
+  (paddingStrategy: NodePaddingStrategy) ->
+  (peerMaxConcurrentStreams: Int) ->
+  (maxSessionInvalidFrames: Int ) ->
+  (maxSessionRejectedStreams: Int) ->
+  (settings: NodeHTTP2Settings) ->
+  (unknownProtocolTimeout: Int) ->
+  NodeHTTP2ServerOptions
+
+export
+convertOptions : {auto http2 : HTTP2} -> HTTP2.Server.Options -> NodeHTTP2ServerOptions
+convertOptions o = ffi_convertOptions
+  o.maxDeflateDynamicTableSize
+  o.maxSettings
+  o.maxSessionMemory
+  o.maxHeaderListPairs
+  o.maxOutstandingPings
+  (fromMaybe (-1) o.maxSendHeaderBlockLength)
+  (convertPaddingStrategy o.paddingStrategy)
+  o.peerMaxConcurrentStreams
+  o.maxSessionInvalidFrames
+  o.maxSessionRejectedStreams
+  (convertSettings o.settings)
+  o.unknownProtocolTimeout
+
 export
 data Http2Server : Type where [external]
 
-%foreign "node:lambda: http2 => http2.createServer()"
-ffi_createServer : HTTP2 -> PrimIO Http2Server
+%foreign "node:lambda: (http2, netServerOptions, serverOptions) => http2.createServer({...netServerOptions, ...serverOptions})"
+ffi_createServer : HTTP2 -> NodeServerOptions -> NodeHTTP2ServerOptions -> PrimIO Http2Server
 
 export
-(.createServer) : HasIO io => HTTP2 -> io Http2Server
-(.createServer) http2 = primIO $ ffi_createServer http2
+(.createServer) : HasIO io => HTTP2 -> Net.Server.Options -> HTTP2.Server.Options -> io Http2Server
+(.createServer) http2 netServerOptions serverOptions = primIO $ ffi_createServer http2 (convertOptions netServerOptions) (convertOptions serverOptions)
 
 %foreign """
   node:lambda:
@@ -100,12 +289,12 @@ export
   let primCallback = \stream => \headers => toPrim $ callback stream headers
   in primIO $ ffi_onStream server primCallback
 
-%foreign "node:lambda: (server, port) => server.listen(port)"
-ffi_listen : Http2Server -> Int -> PrimIO ()
+%foreign "node:lambda: (server, options) => server.listen(options)"
+ffi_listen : Http2Server -> NodeListenOptions -> PrimIO ()
 
 export
-(.listen) : HasIO io => Http2Server -> Int -> io ()
-(.listen) server port = primIO $ ffi_listen server port
+(.listen) : HasIO io => Http2Server -> Listen.Options -> io ()
+(.listen) server options = primIO $ ffi_listen server $ convertOptions options
 
 %foreign "node:lambda: server => server.close()"
 ffi_close : Http2Server -> PrimIO ()
