@@ -28,10 +28,12 @@ main = do
   Right cert <- readFile certFile
     | Left e => putStrLn "Could not read file \{certFile}, reason: \{show e}"
 
-  let secureOptions = MkSecureOptions key cert
+  let options = { tlsContextOptions.cert := [cert]
+                , tlsContextOptions.key := [key]
+                } defaultOptions
 
   http2 <- HTTP2.require
-  ignore $ HTTP2.Secure.secureListen' secureOptions {e = String, pushIO = IO} $ \push =>
+  ignore $ HTTP2.Secure.listen http2 options {e = String, pushIO = IO} $ \push =>
       routes' (text "Resource could not be found" >=> status NOT_FOUND)
         [ get $ path "/query" $ \ctx =>
             text ctx.request.url.search ctx >>= status OK

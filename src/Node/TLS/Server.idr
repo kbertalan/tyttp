@@ -49,7 +49,7 @@ data NodeTLSServerOptions : Type where [external]
     enableTrace: enableTrace != 0,
     handshakeTimeout,
     rejectUnauthorized: rejectUnauthorized != 0,
-    requestCert: requestCert != 0
+    requestCert: requestCert != 0,
     sessionTimeout,
     ticketKeys: ticketKeys.length ? ticketKeys : undefined,
     pskIdentityHint: pskIdentityHint || undefined

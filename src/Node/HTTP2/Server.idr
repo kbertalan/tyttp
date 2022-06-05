@@ -5,6 +5,8 @@ import public Node.Error
 import public Node.HTTP2
 import public Node.Headers
 import public Node.Net.Server
+import public Node.TLS.Context
+import public Node.TLS.Server
 
 export
 data ServerHttp2Stream : Type where [external]
@@ -257,6 +259,116 @@ convertOptions o = ffi_convertOptions
   (convertSettings o.settings)
   o.unknownProtocolTimeout
 
+namespace Secure
+
+  public export
+  record Options where
+    constructor MkOptions
+    allowHTTP1: Bool
+    maxDeflateDynamicTableSize: Int
+    maxSettings: Int
+    maxSessionMemory: Int
+    maxHeaderListPairs: Int
+    maxOutstandingPings: Int
+    maxSendHeaderBlockLength: Maybe Int
+    paddingStrategy: PaddingStrategy
+    peerMaxConcurrentStreams: Int
+    maxSessionInvalidFrames: Int
+    maxSessionRejectedStreams: Int
+    settings: Settings
+    origins: List String
+    unknownProtocolTimeout: Int
+
+  export
+  defaultOptions : HTTP2.Server.Secure.Options
+  defaultOptions = MkOptions
+    { allowHTTP1 = False
+    , maxDeflateDynamicTableSize = 4096
+    , maxSettings = 32
+    , maxSessionMemory = 10
+    , maxHeaderListPairs = 128
+    , maxOutstandingPings = 10
+    , maxSendHeaderBlockLength = Nothing
+    , paddingStrategy = None
+    , peerMaxConcurrentStreams = 100
+    , maxSessionInvalidFrames = 1000
+    , maxSessionRejectedStreams = 100
+    , settings = defaultSettings
+    , origins = []
+    , unknownProtocolTimeout = 10000
+    }
+
+  export
+  data NodeHTTP2SecureServerOptions : Type where [external]
+
+  %foreign """
+    node:lambda:
+    ( allowHTTP1
+    , maxDeflateDynamicTableSize
+    , maxSettings
+    , maxSessionMemory
+    , maxHeaderListPairs
+    , maxOutstandingPings
+    , maxSendHeaderBlockLength
+    , paddingStrategy
+    , peerMaxConcurrentStreams
+    , maxSessionInvalidFrames
+    , maxSessionRejectedStreams
+    , settings
+    , origins
+    , unknownProtocolTimeout
+    ) => ({
+      allowHTTP1: allowHTTP1 != 0,
+      maxDeflateDynamicTableSize,
+      maxSettings,
+      maxSessionMemory,
+      maxHeaderListPairs,
+      maxOutstandingPings,
+      maxSendHeaderBlockLength: maxSendHeaderBlockLength != -1 ? maxSendHeaderBlockLength : undefined,
+      paddingStrategy,
+      peerMaxConcurrentStreams,
+      maxSessionInvalidFrames,
+      maxSessionRejectedStreams,
+      settings,
+      origins: __prim_idris2js_array(origins),
+      unknownProtocolTimeout
+    })
+    """
+  ffi_convertOptions :
+    (allowHTTP1: Int) ->
+    (maxDeflateDynamicTableSize: Int) ->
+    (maxSettings: Int) ->
+    (maxSessionMemory: Int) ->
+    (maxHeaderListPairs: Int) ->
+    (maxOutstandingPings: Int) ->
+    (maxSendHeaderBlockLength: Int) ->
+    (paddingStrategy: NodePaddingStrategy) ->
+    (peerMaxConcurrentStreams: Int) ->
+    (maxSessionInvalidFrames: Int) ->
+    (maxSessionRejectedStreams: Int) ->
+    (settings: NodeHTTP2Settings) ->
+    (origins: List String) ->
+    (unknownProtocolTimeout: Int) ->
+    NodeHTTP2SecureServerOptions
+
+  export
+  convertOptions : {auto http2 : HTTP2} -> HTTP2.Server.Secure.Options -> NodeHTTP2SecureServerOptions
+  convertOptions o = ffi_convertOptions
+    (if o.allowHTTP1 then 1 else 0)
+    o.maxDeflateDynamicTableSize
+    o.maxSettings
+    o.maxSessionMemory
+    o.maxHeaderListPairs
+    o.maxOutstandingPings
+    (fromMaybe (-1) o.maxSendHeaderBlockLength)
+    (convertPaddingStrategy o.paddingStrategy)
+    o.peerMaxConcurrentStreams
+    o.maxSessionInvalidFrames
+    o.maxSessionRejectedStreams
+    (convertSettings o.settings)
+    o.origins
+    o.unknownProtocolTimeout
+
 export
 data Http2Server : Type where [external]
 
@@ -269,16 +381,19 @@ export
 
 %foreign """
   node:lambda:
-  (http2, key, cert) =>
+  (http2, netServerOptions, tlsServerOptions, tlsContextOptions, secureServerOptions) =>
     http2.createSecureServer({
-      key, cert
+      ...netServerOptions,
+      ...tlsServerOptions,
+      ...tlsContextOptions,
+      ...secureServerOptions
     })
   """
-ffi_createSecureServer : HTTP2 -> String -> String -> PrimIO Http2Server
+ffi_createSecureServer : HTTP2 -> NodeServerOptions -> NodeTLSServerOptions -> NodeTLSSecureContextOptions -> NodeHTTP2SecureServerOptions -> PrimIO Http2Server
 
 export
-(.createSecureServer) : HasIO io => HTTP2 -> String -> String -> io Http2Server
-(.createSecureServer) http2 key cert = primIO $ ffi_createSecureServer http2 key cert
+(.createSecureServer) : HasIO io => HTTP2 -> Net.Server.Options -> TLS.Server.Options -> TLS.Context.Options -> HTTP2.Server.Secure.Options -> io Http2Server
+(.createSecureServer) http2 netServerOptions tlsServerOptions tlsContextOptions secureServerOptions = primIO $ ffi_createSecureServer http2 (convertOptions netServerOptions) (convertOptions tlsServerOptions) (convertOptions tlsContextOptions) (convertOptions secureServerOptions)
 
 %foreign "node:lambda: (server, handler) => server.on('stream', (stream, headers) => handler(stream)(headers)())"
 ffi_onStream : Http2Server -> (ServerHttp2Stream -> Headers -> PrimIO ()) -> PrimIO ()

@@ -34,6 +34,7 @@ modules = TyTTP
   , Node.HTTP2.Client
   , Node.HTTP2.Server
   , Node.Net.Server
+  , Node.TLS.Context
   , Node.TLS.Server
   , Node.URI
   , Data.Buffer.Ext

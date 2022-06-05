@@ -181,26 +181,50 @@ listen' {http2} handler = listen http2 defaultOptions handler
 namespace Secure
 
   public export
-  record SecureOptions where
-    constructor MkSecureOptions
-    cert: String
-    key: String
+  record Options where
+    constructor MkOptions
+    netServerOptions : Net.Server.Options
+    tlsServerOptions : TLS.Server.Options
+    tlsContextOptions : TLS.Context.Options
+    serverOptions : HTTP2.Server.Secure.Options
+    listenOptions : Listen.Options
+    errorHandler : String -> RawHttpResponse
 
   export
-  secureListen : HasIO io
+  defaultOptions : HTTP2.Secure.Options
+  defaultOptions = MkOptions
+    { netServerOptions = Net.Server.defaultOptions
+    , tlsServerOptions = TLS.Server.defaultOptions
+    , tlsContextOptions = TLS.Context.defaultOptions
+    , serverOptions = HTTP2.Server.Secure.defaultOptions
+    , listenOptions =
+      { port := Just 3443
+      , host := Just "localhost"
+      } Listen.defaultOptions
+    , errorHandler = \e => MkResponse
+      { status = INTERNAL_SERVER_ERROR
+      , headers =
+        [ ("Content-Type", "text/plain")
+        , ("Content-Length", show $ length e)
+        ]
+      , body = singleton $ fromString e
+      }
+    }
+
+  export
+  listen : HasIO io
      => HasIO pushIO
      => Error e
      => HTTP2
-     -> SecureOptions
-     -> HTTP2.Options
+     -> HTTP2.Secure.Options
      -> (
           (Lazy PushContext -> pushIO ())
           -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
           -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
         )
      -> io Http2Server
-  secureListen http secureOptions options handler = do
-    server <- http.createSecureServer secureOptions.cert secureOptions.key
+  listen http2 options handler = do
+    server <- http2.createSecureServer options.netServerOptions options.tlsServerOptions options.tlsContextOptions options.serverOptions
 
     server.onStream $ \stream, headers => do
       let Right req = parseRequest stream headers
@@ -214,17 +238,3 @@ namespace Secure
 
     server.listen options.listenOptions
     pure server
-
-  export
-  secureListen' : HasIO io
-     => HasIO pushIO
-     => Error e
-     => { auto http2 : HTTP2 }
-     -> SecureOptions
-     -> (
-          (Lazy PushContext -> pushIO ())
-          -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-          -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
-        )
-     -> io Http2Server
-  secureListen' {http2} secureOptions handler = secureListen http2 secureOptions defaultOptions handler
