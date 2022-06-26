@@ -99,9 +99,9 @@ reject : MonadPromise e n m => e -> m a
 reject e = promise $ \_, reject' => reject' e
 
 export
-mapRejected : MonadPromise e' n m' => (e -> e') -> Promise e n a -> m' a
+mapRejected : MonadPromise e' n m' => (e -> e') -> (forall m. MonadPromise e n m => m a) -> m' a
 mapRejected fn ma = promise $ \resolve, reject => 
-  runPromise resolve (reject . fn) ma
+  runPromise { m = n } resolve (reject . fn) ma
 
 public export
 MonadPromise e n m => MonadPromise e n (EitherT e' m) where

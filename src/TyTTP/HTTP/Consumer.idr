@@ -40,48 +40,47 @@ consumePayload t ItIsConsumer ct raw =
 
 safeConsume :
   Error e
-  => MonadTrans m
-  => Alternative (m (Promise e IO))
+  => MonadTrans t
+  => MonadPromise e IO m
+  => Alternative (t m)
   => HasContentType h1
   => (list: List Type)
   -> (areAccepts : All IsAccept list)
   -> (areConsumers : All (IsConsumer a) list)
   -> (ct : String)
   -> (
-    Context Method u v h1 s h2 (Either ConsumerError a) b
-    -> Promise e IO $ Context Method u' v' h1' s' h2' a' b'
+    Context me u v h1 s h2 (Either ConsumerError a) b
+    -> (forall m'. MonadPromise e IO m' => m' $ Context me' u' v' h1' s' h2' a' b')
   )
-  -> Context Method u v h1 s h2 (Publisher IO e Buffer) b
-  -> m (Promise e IO) $
-     Context Method u' v' h1' s' h2' (Publisher IO e Buffer) b'
+  -> Context me u v h1 s h2 (Publisher IO e Buffer) b
+  -> t m $ Context me' u' v' h1' s' h2' () b'
 safeConsume [] _ _ _ _ _ = empty
 safeConsume (t::ts) (ItIsAccept::as) (c::cs) ct handler ctx =
   if elem ct (contentType t)
-  then lift $ flip unsafeConsumeBody ctx $ \s => MkPromise $ \cb => do
-          let raw = s.request.body
-              result = handler $ { request.body := consumePayload t c ct raw } s
-          result.continuation $ MkCallbacks
-            { onSucceded = \r => cb.onSucceded $ { request.body := singleton raw } r
-            , onFailed = \err => cb.onFailed err }
+  then lift $ flip unsafeConsumeBody ctx $ \ctx' => promise $ \resolve' ,reject' => do
+          let raw = ctx'.request.body
+              result = handler $ { request.body := consumePayload t c ct raw } ctx'
+              success = \r => resolve' $ { request.body := () } r
+          runPromise { m = IO } success reject' result
   else safeConsume ts as cs ct handler ctx
 
 export
 consumes :
   Error e
-  => MonadTrans m
-  => Alternative (m (Promise e IO))
+  => MonadTrans t
+  => MonadPromise e IO m
+  => Alternative (t m)
   => HasContentType h1
   => (list: List Type)
   -> {auto isNonEmpty : NonEmpty list}
   -> {auto areAccepts : All IsAccept list}
   -> {auto areConsumers : All (IsConsumer a) list}
   -> (
-    Context Method u v h1 s h2 (Either ConsumerError a) b
-    -> Promise e IO $ Context Method u' v' h1' s' h2' a' b'
+    Context me u v h1 s h2 (Either ConsumerError a) b
+    -> (forall m'. MonadPromise e IO m' => m' $ Context me' u' v' h1' s' h2' a' b')
   )
-  -> Context Method u v h1 s h2 (Publisher IO e Buffer) b
-  -> m (Promise e IO) $
-     Context Method u' v' h1' s' h2' (Publisher IO e Buffer) b'
+  -> Context me u v h1 s h2 (Publisher IO e Buffer) b
+  -> t m $ Context me' u' v' h1' s' h2' () b'
 consumes list {isNonEmpty} {areAccepts} {areConsumers} handler ctx = do
   let Just ct = getContentType ctx.request.headers
     | _ => empty
@@ -91,34 +90,34 @@ consumes list {isNonEmpty} {areAccepts} {areConsumers} handler ctx = do
 export
 consumes' :
   Error e
-  => MonadTrans m
-  => Alternative (m (Promise e IO))
+  => MonadTrans t
+  => MonadPromise e IO m
+  => Alternative (t m)
   => HasContentType h1
   => (list: List Type)
   -> {auto isNonEmpty : NonEmpty list}
   -> {auto areAccepts : All IsAccept list}
   -> {auto areConsumers : All (IsConsumer a) list}
   -> (
-    Context Method u v h1 s h2 ConsumerError b
-    -> Promise e IO $ Context Method u' v' h1' s' h2' a' b'
+    Context me u v h1 s h2 ConsumerError b
+    -> (forall m'. MonadPromise e IO m' => m' $ Context me' u' v' h1' s' h2' a' b')
   )
   -> (
-    Context Method u v h1 s h2 a b
-    -> Promise e IO $ Context Method u' v' h1' s' h2' a'' b'
+    Context me u v h1 s h2 a b
+    -> (forall m''. MonadPromise e IO m'' => m'' $ Context me' u' v' h1' s' h2' a'' b')
   )
-  -> Context Method u v h1 s h2 (Publisher IO e Buffer) b
-  -> m (Promise e IO) $
-     Context Method u' v' h1' s' h2' (Publisher IO e Buffer) b'
+  -> Context me u v h1 s h2 (Publisher IO e Buffer) b
+  -> t m $ Context me' u' v' h1' s' h2' () b'
 consumes' list {isNonEmpty} {areAccepts} {areConsumers} errHandler handler ctx =
   let handler' : 
-        Context Method u v h1 s h2 (Either ConsumerError a) b
-        -> Promise e IO $ Context Method u' v' h1' s' h2' () b'
+        Context me u v h1 s h2 (Either ConsumerError a) b
+        -> (forall m'. MonadPromise e IO m' => m' $ Context me' u' v' h1' s' h2' () b')
       handler' s =
         case s.request.body of
           Right r => do
-            result <- handler $ { request.body := r } s 
+            result <- handler $ { request.body := r } s
             pure $ { request.body := () } result
           Left  l => do
-            result <- errHandler $ { request.body := l } s 
+            result <- errHandler $ { request.body := l } s
             pure $ { request.body := () } result
   in consumes list handler' ctx
