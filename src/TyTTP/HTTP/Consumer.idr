@@ -53,14 +53,14 @@ safeConsume :
     -> (forall m'. MonadPromise e IO m' => m' $ Context me' u' v' h1' s' h2' a' b')
   )
   -> Context me u v h1 s h2 (Publisher IO e Buffer) b
-  -> t m $ Context me' u' v' h1' s' h2' () b'
+  -> t m $ Context me' u' v' h1' s' h2' (Publisher IO e Buffer) b'
 safeConsume [] _ _ _ _ _ = empty
 safeConsume (t::ts) (ItIsAccept::as) (c::cs) ct handler ctx =
   if elem ct (contentType t)
   then lift $ flip unsafeConsumeBody ctx $ \ctx' => promise $ \resolve' ,reject' => do
           let raw = ctx'.request.body
               result = handler $ { request.body := consumePayload t c ct raw } ctx'
-              success = \r => resolve' $ { request.body := () } r
+              success = \r => resolve' $ { request.body := singleton raw } r
           runPromise { m = IO } success reject' result
   else safeConsume ts as cs ct handler ctx
 
@@ -80,7 +80,7 @@ consumes :
     -> (forall m'. MonadPromise e IO m' => m' $ Context me' u' v' h1' s' h2' a' b')
   )
   -> Context me u v h1 s h2 (Publisher IO e Buffer) b
-  -> t m $ Context me' u' v' h1' s' h2' () b'
+  -> t m $ Context me' u' v' h1' s' h2' (Publisher IO e Buffer) b'
 consumes list {isNonEmpty} {areAccepts} {areConsumers} handler ctx = do
   let Just ct = getContentType ctx.request.headers
     | _ => empty
@@ -107,7 +107,7 @@ consumes' :
     -> (forall m''. MonadPromise e IO m'' => m'' $ Context me' u' v' h1' s' h2' a'' b')
   )
   -> Context me u v h1 s h2 (Publisher IO e Buffer) b
-  -> t m $ Context me' u' v' h1' s' h2' () b'
+  -> t m $ Context me' u' v' h1' s' h2' (Publisher IO e Buffer) b'
 consumes' list {isNonEmpty} {areAccepts} {areConsumers} errHandler handler ctx =
   let handler' : 
         Context me u v h1 s h2 (Either ConsumerError a) b
