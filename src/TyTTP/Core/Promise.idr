@@ -24,11 +24,12 @@ runPromise : (a -> m ()) -> (e -> m ()) -> Promise e m a -> m ()
 runPromise onSucceded onFailed promise = continuation promise $ MkCallbacks onSucceded onFailed
 
 export
-Functor (Promise e m) where
-  map f (MkPromise ca) = MkPromise $ \cb => ca $ MkCallbacks
-    { onSucceded = cb.onSucceded . f
-    , onFailed = cb.onFailed
-    }
+succeed : a -> Promise e m a
+succeed a = MkPromise $ \cb => cb.onSucceded a
+
+export
+fail : e -> Promise e m a
+fail e = MkPromise $ \cb => cb.onFailed e
 
 export
 mapFailure : (e -> e') -> Promise e m a -> Promise e' m a
@@ -37,11 +38,18 @@ mapFailure fn (MkPromise conta) = MkPromise $ \cb => conta $ MkCallbacks
   , onFailed = cb.onFailed . fn
   }
 
+export
+Functor (Promise e m) where
+  map f (MkPromise ca) = MkPromise $ \cb => ca $ MkCallbacks
+    { onSucceded = cb.onSucceded . f
+    , onFailed = cb.onFailed
+    }
+
 mutual
 
   export
   Applicative (Promise e m) where
-    pure a = MkPromise $ \cb => cb.onSucceded a
+    pure = succeed
     fn <*> pa = fn >>= \f => map f pa
 
   export
@@ -62,14 +70,6 @@ HasIO m => HasIO (Promise e m) where
   liftIO = lift . liftIO
 
 export
-succeed : a -> Promise e m a
-succeed = pure
-
-export
-fail : e -> Promise e m a
-fail e = MkPromise $ \cb => cb.onFailed e
-
-export
 MonadError e (Promise e m) where
   throwError = fail
   catchError (MkPromise conta) fn = MkPromise $ \cb => conta $ MkCallbacks
@@ -86,10 +86,6 @@ public export
 interface Monad m => Monad n => MonadPromise e n m | m where
   promise : ((resolve: a -> n ()) -> (reject: e -> n ()) -> n ()) -> m a
 
-public export
-Monad n => MonadPromise e n (Promise e n) where
-  promise fn = MkPromise $ \cb => fn cb.onSucceded cb.onFailed
-
 export
 resolve : MonadPromise e n m => a -> m a
 resolve = pure
@@ -98,10 +94,9 @@ export
 reject : MonadPromise e n m => e -> m a
 reject e = promise $ \_, reject' => reject' e
 
-export
-mapRejected : MonadPromise e' n m' => (e -> e') -> (forall m. MonadPromise e n m => m a) -> m' a
-mapRejected fn ma = promise $ \resolve, reject => 
-  runPromise { m = n } resolve (reject . fn) ma
+public export
+Monad n => MonadPromise e n (Promise e n) where
+  promise fn = MkPromise $ \cb => fn cb.onSucceded cb.onFailed
 
 public export
 MonadPromise e n m => MonadPromise e n (EitherT e' m) where
