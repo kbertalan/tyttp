@@ -4,7 +4,7 @@ import Data.Mime.Apache
 import Data.String
 
 import TyTTP
-import TyTTP.HTTP
+import TyTTP.HTTP.Protocol
 
 namespace Method
 

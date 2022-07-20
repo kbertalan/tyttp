@@ -5,7 +5,7 @@ import Data.List
 import Data.List1
 import Data.Maybe
 import TyTTP
-import TyTTP.URL
+import TyTTP.URL.Definition
 
 %default total
 

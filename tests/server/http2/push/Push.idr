@@ -1,26 +1,19 @@
 module Push
 
-import Control.Monad.Trans
-import Control.Monad.Maybe
 import Data.IORef
 import Data.Buffer.Ext
 import Node
 import Node.HTTP2.Client
-import Node.HTTP2.Server
 import TyTTP.Adapter.Node.HTTP2
-import TyTTP.Adapter.Node.URI
 import TyTTP.HTTP
-import TyTTP.HTTP.Producer
-import TyTTP.HTTP.Routing
 import TyTTP.URL
-import TyTTP.URL.Path
 
 main : IO ()
 main = do
   http2 <- HTTP2.require
   server <- HTTP2.listen' {e = String} $ \push =>
-      routes' (text "Resource could not be found" >=> status NOT_FOUND)
-        [ get $ path "/push" :> \step => do
+      routes' (sendText "Resource could not be found" >=> status NOT_FOUND)
+        [ get $ pattern "/push" :> \step => do
             push $ MkContext
               { request = MkRequest
                 { method = GET
@@ -35,7 +28,7 @@ main = do
                 , body = singleton "this is pushed"
                 }
               }
-            text "this is the response" step >>= status OK
+            sendText "this is the response" step >>= status OK
         ]
 
   defer $ do

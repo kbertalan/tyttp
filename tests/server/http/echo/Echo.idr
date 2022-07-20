@@ -1,15 +1,10 @@
 module Echo
 
-import Control.Monad.Trans
-import Data.Buffer
 import Data.Buffer.Ext
 import Node
 import Node.HTTP.Client
-import Node.HTTP.Server
 import TyTTP.Adapter.Node.HTTP as HTTP
-import TyTTP.Core.Error
 import TyTTP.HTTP
-import TyTTP.HTTP.Combinators
 
 hReflect : Context Method String Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
   -> IO $ Context Method String Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) (Publisher IO NodeError Buffer)

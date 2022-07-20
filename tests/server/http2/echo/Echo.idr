@@ -1,15 +1,11 @@
 module Echo
 
-import Control.Monad.Trans
-import Data.Buffer
 import Data.Buffer.Ext
 import Node
 import Node.HTTP2.Client
-import Node.HTTP2.Server
 import TyTTP.Adapter.Node.HTTP2 as HTTP2
-import TyTTP.Core.Error
-import TyTTP.HTTP
-import TyTTP.HTTP.Combinators
+import TyTTP
+import TyTTP.HTTP.Protocol
 import TyTTP.URL
 
 hReflect : Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()

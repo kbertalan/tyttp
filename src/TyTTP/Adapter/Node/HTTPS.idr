@@ -1,17 +1,16 @@
 module TyTTP.Adapter.Node.HTTPS
 
-import Data.Buffer
+import public Data.Buffer
 import Data.Buffer.Ext
 import Data.String
 import Data.Maybe
-import Node
 import public Node.Error
-import Node.HTTPS.Server
+import public Node.HTTPS.Server
 import Node.HTTP.Server
 import TyTTP
-import TyTTP.URL
 import public TyTTP.Adapter.Node.Error
-import TyTTP.HTTP as HTTP
+import TyTTP.HTTP
+import TyTTP.URL
 
 %hide Node.HTTP.Server.Server
 
@@ -88,7 +87,7 @@ fromNodeRequest nodeReq =
       path = nodeReq.url
       headers = nodeReq.headers.asList
       version = parseVersion nodeReq.httpVersion
-  in HTTP.mkRequest method path version headers $ MkPublisher $ \s => do
+  in mkRequest method path version headers $ MkPublisher $ \s => do
         nodeReq.onData s.onNext
         nodeReq.onError s.onFailed
         nodeReq.onEnd s.onSucceded

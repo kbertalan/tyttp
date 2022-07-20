@@ -1,16 +1,16 @@
 module TyTTP.Adapter.Node.HTTP2
 
-import Data.Buffer
+import public Data.Buffer
 import Data.Buffer.Ext
 import Data.String
 import Data.Maybe
 import Node
 import public Node.Error
-import Node.HTTP2.Server
+import public Node.HTTP2.Server
 import TyTTP
 import TyTTP.URL
 import public TyTTP.Adapter.Node.Error
-import TyTTP.HTTP as HTTP
+import TyTTP.HTTP
 
 namespace Fields
 
@@ -88,7 +88,7 @@ parseRequest stream headers =
       (path, search) = String.break (=='?') pathAndSearch
       url = MkURL scheme authority path search
       version = Version_2
-  in Right $ HTTP.mkRequest method url version headers.asList $ MkPublisher $ \s => do
+  in Right $ mkRequest method url version headers.asList $ MkPublisher $ \s => do
         stream.onData s.onNext
         stream.onError s.onFailed
         stream.onEnd s.onSucceded
