@@ -4,7 +4,7 @@ import Data.List
 import Data.String
 import public Data.Either
 import TyTTP
-import TyTTP.URL
+import TyTTP.URL.Definition
 
 %default total
 
@@ -116,7 +116,7 @@ matcher s (MkParsedPattern ls) = go ls (unpack s) $ MkPath s [] ""
     go _ _ _ = Nothing
 
 export
-path : Monad m 
+pattern : Monad m 
   => Alternative m 
   => (str : String)
   -> {auto 0 ok : IsRight (Path.parse str)}
@@ -126,7 +126,7 @@ path : Monad m
   )
   -> Context me (URL auth String s) v h1 st h2 a b
   -> m $ Context me' (URL auth String s) v' h1' st' h2' a' b'
-path str {ok} handler ctx with (Path.parse str)
+pattern str {ok} handler ctx with (Path.parse str)
   _ | Right parsedPattern =
     case matcher ctx.request.url.path parsedPattern of
       Just p => do

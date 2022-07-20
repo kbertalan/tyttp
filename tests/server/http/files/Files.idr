@@ -1,20 +1,13 @@
 module Files
 
 import Data.Buffer
-import Control.Monad.Either
-import Control.Monad.Maybe
-import Control.Monad.Trans
-import Node.HTTP.Server
 import Node.HTTP.Client
 import Node
 import System.Directory
 import TyTTP.Adapter.Node.HTTP
 import TyTTP.Adapter.Node.Static
 import TyTTP.HTTP
-import TyTTP.HTTP.Producer
-import TyTTP.HTTP.Routing
 import TyTTP.URL
-import TyTTP.URL.Path
 
 sendError :
   Error e
@@ -24,7 +17,7 @@ sendError :
   -> Context me u v h1 s StringHeaders a b
   -> io $ Context me u v h1 Status StringHeaders a (Publisher IO e Buffer)
 sendError st str ctx = do
-  text str ctx >>= status st
+  sendText str ctx >>= status st
 
 routeDef : Error e
   => String
@@ -36,7 +29,7 @@ routeDef folder =
     in
       parseUrl' urlError :>
         routes' routingError
-          [ get $ path "/static/*" :> hStatic folder $ flip $ \ctx =>
+          [ get $ pattern "/static/*" :> hStatic folder $ flip $ \ctx =>
               \case
                 StatError e => sendError INTERNAL_SERVER_ERROR ("File error: " <+> message e) ctx
                 NotAFile s => sendError NOT_FOUND ("Could not found file: " <+> s) ctx

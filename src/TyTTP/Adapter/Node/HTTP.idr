@@ -1,12 +1,12 @@
 module TyTTP.Adapter.Node.HTTP
 
-import Data.Buffer
+import public Data.Buffer
 import Data.Buffer.Ext
 import public Node.Error
-import Node.HTTP.Server
+import public Node.HTTP.Server
 import TyTTP
 import public TyTTP.Adapter.Node.Error
-import TyTTP.HTTP as HTTP
+import TyTTP.HTTP
 
 public export
 RawHttpRequest : Type
@@ -50,7 +50,7 @@ fromNodeRequest nodeReq =
       path = nodeReq.url
       headers = nodeReq.headers.asList
       version = parseVersion nodeReq.httpVersion
-  in HTTP.mkRequest method path version headers $ MkPublisher $ \s => do
+  in mkRequest method path version headers $ MkPublisher $ \s => do
         nodeReq.onData s.onNext
         nodeReq.onError s.onFailed
         nodeReq.onEnd s.onSucceded

@@ -15,13 +15,15 @@ modules = TyTTP
   , TyTTP.Core.Routing
   , TyTTP.Core.Stream
   , TyTTP.HTTP
-  , TyTTP.HTTP.Combinators
   , TyTTP.HTTP.Consumer
   , TyTTP.HTTP.Producer
+  , TyTTP.HTTP.Protocol
   , TyTTP.HTTP.Routing
   , TyTTP.URL
+  , TyTTP.URL.Definition
   , TyTTP.URL.Path
   , TyTTP.URL.Search
+  , TyTTP.URL.Simple
   , Node
   , Node.Error
   , Node.FS

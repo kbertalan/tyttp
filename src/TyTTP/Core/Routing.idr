@@ -1,6 +1,6 @@
 module TyTTP.Core.Routing
 
-import Control.Monad.Maybe
+import public Control.Monad.Maybe
 import TyTTP.Core.Context
 
 export

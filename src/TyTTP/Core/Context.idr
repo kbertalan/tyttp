@@ -1,6 +1,6 @@
 module TyTTP.Core.Context
 
-import Control.Monad.Trans
+import public Control.Monad.Trans
 import TyTTP.Core.Request
 import TyTTP.Core.Response
 
