@@ -1,20 +1,22 @@
 module Main
 
-import Data.Buffer
-import Data.IORef
-import Control.Monad.Trans
+import Control.Monad.Either
 import Control.Monad.Maybe
-import Node.HTTP2.Client
-import Node.HTTP2.Server
+import Control.Monad.Trans
+import Data.Buffer
+import Node.HTTPS.Server
 import System
 import System.File.ReadWrite
-import TyTTP.Adapter.Node.HTTP2
+import TyTTP.Adapter.Node.HTTPS
 import TyTTP.HTTP
 import TyTTP.HTTP.Producer
 import TyTTP.HTTP.Routing
 import TyTTP.URL
 import TyTTP.URL.Path
 import TyTTP.URL.Search
+
+%hide TyTTP.HTTP.Routing.ContentType.text
+%hide TyTTP.URL.URL.path
 
 main : IO ()
 main = do
@@ -30,43 +32,15 @@ main = do
 
   let options = { tlsContextOptions.cert := [cert]
                 , tlsContextOptions.key := [key]
-                } defaultOptions
+                } HTTPS.defaultOptions
 
-  http2 <- HTTP2.require
-  ignore $ HTTP2.Secure.listen http2 options {e = String, pushIO = IO} $ \push =>
-      routes' (text "Resource could not be found" >=> status NOT_FOUND)
+  https <- HTTPS.require
+  ignore $ listen https options { e = String }
+    $ parseUrl' (const $ text "URL has invalid format" >=> status BAD_REQUEST)
+    :> routes' (text "Resource could not be found" >=> status NOT_FOUND)
         [ get $ path "/query" $ \ctx =>
             text ctx.request.url.search ctx >>= status OK
         , get $ path "/parsed" $ Simple.search $ \ctx =>
             text (show ctx.request.url.search) ctx >>= status OK
-        , get $ path "/request" :> \ctx => do
-            putStrLn "Calling https"
-            (headers, stream) <- MkPromise $ \cb => do
-              session <- http2.connect "https://localhost:3443" $ {
-                  rejectUnauthorized := False -- allow self-signed certificates
-                } Connect.defaultOptions
-              stream <- session.get "/parsed?q=from-request" =<< empty
-              stream.onResponse $ \headers => cb.onSucceded (headers, stream)
-              errorHandler <- first $ \error => cb.onFailed $ Node.Error.message error
-              onError stream errorHandler
-              (Session.(.onError)) session errorHandler
-
-            pure $
-              { response.status := OK
-              , response.headers := [("Content-Type", "text/plain")]
-              , response.body := MkPublisher $ \s => do
-                  onData stream s.onNext
-                  onEnd stream $ s.onSucceded ()
-                  onError stream s.onFailed
-              } ctx
         ]
-
-  where
-    first : HasIO io => (a -> io ()) -> io (a -> io ())
-    first cb = do
-      isFirst <- newIORef True
-      pure $ \a => do
-        when !(readIORef isFirst) $ do
-          writeIORef isFirst False
-          cb a
 

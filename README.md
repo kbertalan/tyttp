@@ -4,7 +4,7 @@ A type safe _experimental_ web framework for idris2 targeting node js.
 
 # Features
 
-- HTTP server, HTTP2 server
+- HTTP/HTTPS server, HTTP2 server
 - Streaming from end-to-end
 - Supports async execution via an Inigo style Promise module
 
@@ -40,10 +40,6 @@ Known consumers:
     make build
 
 # Dev
-
-    make repl
-
-or
 
     make dev
 

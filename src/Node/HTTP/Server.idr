@@ -91,6 +91,7 @@ defaultOptions = MkOptions
   , keepAliveInitialDelay = 0
   }
 
+export
 data NodeHTTPServerOptions : Type where [external]
 
 %foreign """
