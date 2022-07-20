@@ -9,7 +9,6 @@ modules = TyTTP
   , TyTTP.Adapter.Node.URI
   , TyTTP.Core.Context
   , TyTTP.Core.Error
-  , TyTTP.Core.Promise
   , TyTTP.Core.Request
   , TyTTP.Core.Response
   , TyTTP.Core.Routing
@@ -47,6 +46,7 @@ modules = TyTTP
 depends = base
   , apache-mime-types
   , contrib
+  , promise
 
 opts      = "--codegen node"
 

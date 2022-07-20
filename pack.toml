@@ -1,0 +1,5 @@
+[custom.all.promise]
+type = "github"
+url  = "https://github.com/kbertalan/idris2-promise"
+commit = "main"
+ipkg = "promise.ipkg"
