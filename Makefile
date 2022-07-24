@@ -12,7 +12,7 @@ CA_FILE=./certs/ca-cert.pem
 export KEY_FILE CERT_FILE
 
 build:
-	bash -c 'time $(idris2) --build $(package) --codegen $(codegen)'
+	bash -c 'time pack build $(package)'
 
 dist: build
 	npx rollup --config rollup.config.js
@@ -22,7 +22,7 @@ clean:
 	rm -rf certs
 
 repl:
-	rlwrap $(idris2) --repl $(package) --codegen $(codegen)
+	pack --with-ipkg $(package) --rlwrap repl
 
 certs:
 	mkdir ./certs
@@ -46,10 +46,10 @@ install:
 test-clean:
 	make -C tests clean
 
-test-build: install
+test-build:
 	make -C tests build
 
-test: test-build
+test: install test-build
 	make -C tests test
 
 dev:
