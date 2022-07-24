@@ -26,11 +26,11 @@ A type safe _experimental_ web framework for idris2 targeting node js.
 1. idris2 version 0.5.1-394613432, see [installation guide](https://github.com/idris-lang/Idris2/blob/main/INSTALL.md)
 1. node LTS 16.x, see [download page](https://nodejs.org/en/download/)
 
-# Consumers
+# Consumers and Producers
 
 Supporting multiple formats can introduce many dependencies, so their handling is encouraged to be packaged separately.
 
-Known consumers:
+Known consumers and producers:
 
 - [json](https://github.com/kbertalan/tyttp-json) for supporting `application/json`
 
