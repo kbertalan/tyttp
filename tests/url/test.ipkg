@@ -1,6 +1,6 @@
 package test
 
-depends = tyttp
+depends = tyttp, promise
 modules = Url
 main = Url
 executable = test

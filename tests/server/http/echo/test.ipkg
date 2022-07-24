@@ -1,6 +1,6 @@
 package test
 
-depends = tyttp, apache-mime-types
+depends = tyttp, apache-mime-types, promise
 modules = Echo
 main = Echo
 executable = test
