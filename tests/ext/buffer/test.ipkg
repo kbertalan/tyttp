@@ -1,7 +1,0 @@
-package test
-
-depends = tyttp
-modules = Buffer
-main = Buffer
-executable = test
-opts = "--no-color --console-width 0"
