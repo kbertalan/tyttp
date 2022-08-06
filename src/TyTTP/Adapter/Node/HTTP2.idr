@@ -56,9 +56,9 @@ sendResponse res stream = do
 
   stream.respond headers
   res.body.subscribe $ MkSubscriber
-        { onNext = \a => stream.write a }
+        { onNext = \a => stream.write a Nothing }
         { onFailed = \e => pure () }
-        { onSucceded = \_ => stream.end }
+        { onSucceded = \_ => stream.end Nothing { d = Buffer } }
   where
     mapHeaders : StringHeaders -> Int -> IO Headers
     mapHeaders h s = do
@@ -90,8 +90,8 @@ parseRequest stream headers =
       version = Version_2
   in Right $ mkRequest method url version headers.asList $ MkPublisher $ \s => do
         stream.onData s.onNext
-        stream.onError s.onFailed
-        stream.onEnd s.onSucceded
+        (Readable.(.onError)) stream s.onFailed
+        stream.onEnd $ s.onSucceded ()
 
 pusher : HasIO io => ServerHttp2Stream -> Lazy PushContext -> io ()
 pusher parent ctx = do

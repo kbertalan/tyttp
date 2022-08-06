@@ -60,9 +60,9 @@ toNodeResponse res nodeRes = do
 
   nodeRes.writeHead status headers
   res.body.subscribe $ MkSubscriber
-        { onNext = \a => nodeRes.write a }
+        { onNext = \a => nodeRes.write a Nothing }
         { onFailed = \e => pure () }
-        { onSucceded = \_ => nodeRes.end }
+        { onSucceded = \_ => nodeRes.end Nothing {d = Buffer} }
   where
     mapHeaders : StringHeaders -> IO Headers
     mapHeaders h = do
@@ -90,7 +90,7 @@ fromNodeRequest nodeReq =
   in mkRequest method path version headers $ MkPublisher $ \s => do
         nodeReq.onData s.onNext
         nodeReq.onError s.onFailed
-        nodeReq.onEnd s.onSucceded
+        nodeReq.onEnd $ s.onSucceded ()
 
 export
 listen : HasIO io
