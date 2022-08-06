@@ -1,6 +1,0 @@
-[custom.all.node]
-type = "github"
-url  = "https://github.com/kbertalan/idris2-node"
-commit = "main"
-ipkg = "node.ipkg"
-
