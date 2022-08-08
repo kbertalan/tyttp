@@ -6,7 +6,8 @@ import Data.String
 import Data.Maybe
 import Node
 import public Node.Error
-import public Node.HTTP2.Server
+import public Node.HTTP2
+import public Node.Net.Server.Listen
 import TyTTP
 import TyTTP.URL
 import public TyTTP.Adapter.Node.Error
@@ -77,7 +78,7 @@ sendResponseFromPromise errorHandler (MkPromise cont) stream =
   in
     cont callbacks
 
-parseRequest : Node.HTTP2.Server.ServerHttp2Stream -> Headers -> Either String RawHttpRequest
+parseRequest : ServerHttp2Stream -> Headers -> Either String RawHttpRequest
 parseRequest stream headers =
   let Just method = parseMethod <$> headers.getHeader (show Fields.Method)
         | Nothing => Left "Method header is missing from request"
@@ -113,16 +114,16 @@ pusher parent ctx = do
 public export
 record Options where
   constructor MkOptions
-  netServerOptions : Net.Server.Options
-  serverOptions : HTTP2.Server.Options
+  netServerOptions : Net.CreateServer.Options
+  serverOptions : HTTP2.CreateServer.Options
   listenOptions : Listen.Options
   errorHandler : String -> RawHttpResponse
 
 export
 defaultOptions : HTTP2.Options
 defaultOptions = MkOptions
-  { netServerOptions = Net.Server.defaultOptions
-  , serverOptions = HTTP2.Server.defaultOptions
+  { netServerOptions = Net.CreateServer.defaultOptions
+  , serverOptions = HTTP2.CreateServer.defaultOptions
   , listenOptions =
     { port := Just 3000
     , host := Just "localhost"
@@ -183,20 +184,20 @@ namespace Secure
   public export
   record Options where
     constructor MkOptions
-    netServerOptions : Net.Server.Options
-    tlsServerOptions : TLS.Server.Options
-    tlsContextOptions : TLS.Context.Options
-    serverOptions : HTTP2.Server.Secure.Options
+    netServerOptions : Net.CreateServer.Options
+    tlsServerOptions : TLS.CreateServer.Options
+    tlsContextOptions : TLS.CreateSecureContext.Options
+    serverOptions : HTTP2.CreateSecureServer.Options
     listenOptions : Listen.Options
     errorHandler : String -> RawHttpResponse
 
   export
   defaultOptions : HTTP2.Secure.Options
   defaultOptions = MkOptions
-    { netServerOptions = Net.Server.defaultOptions
-    , tlsServerOptions = TLS.Server.defaultOptions
-    , tlsContextOptions = TLS.Context.defaultOptions
-    , serverOptions = HTTP2.Server.Secure.defaultOptions
+    { netServerOptions = Net.CreateServer.defaultOptions
+    , tlsServerOptions = TLS.CreateServer.defaultOptions
+    , tlsContextOptions = TLS.CreateSecureContext.defaultOptions
+    , serverOptions = HTTP2.CreateSecureServer.defaultOptions
     , listenOptions =
       { port := Just 3443
       , host := Just "localhost"

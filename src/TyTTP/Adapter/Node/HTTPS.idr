@@ -5,8 +5,8 @@ import Data.Buffer.Ext
 import Data.String
 import Data.Maybe
 import public Node.Error
-import public Node.HTTPS.Server
-import Node.HTTP.Server
+import Node.HTTP
+import public Node.HTTPS
 import TyTTP
 import public TyTTP.Adapter.Node.Error
 import TyTTP.HTTP
@@ -25,20 +25,20 @@ RawHttpResponse = Response Status StringHeaders $ Publisher IO NodeError Buffer
 public export
 record Options e where
   constructor MkOptions
-  netServerOptions : Net.Server.Options
-  tlsServerOptions : TLS.Server.Options
-  tlsContextOptions : TLS.Context.Options
-  serverOptions : HTTPS.Server.Options
+  netServerOptions : Net.CreateServer.Options
+  tlsServerOptions : TLS.CreateServer.Options
+  tlsContextOptions : TLS.CreateSecureContext.Options
+  serverOptions : HTTPS.CreateServer.Options
   listenOptions : Listen.Options
   errorHandler : e -> RawHttpResponse
 
 export
 defaultOptions : Error e => HTTPS.Options e
 defaultOptions = MkOptions
-  { netServerOptions = Net.Server.defaultOptions
-  , tlsServerOptions = TLS.Server.defaultOptions
-  , tlsContextOptions = TLS.Context.defaultOptions
-  , serverOptions = HTTPS.Server.defaultOptions
+  { netServerOptions = Net.CreateServer.defaultOptions
+  , tlsServerOptions = TLS.CreateServer.defaultOptions
+  , tlsContextOptions = TLS.CreateSecureContext.defaultOptions
+  , serverOptions = HTTPS.CreateServer.defaultOptions
   , listenOptions =
     { port := Just 3443
     , host := Just "localhost"
@@ -53,7 +53,7 @@ defaultOptions = MkOptions
     }
   }
 
-toNodeResponse : RawHttpResponse -> Node.HTTP.Server.ServerResponse -> IO ()
+toNodeResponse : RawHttpResponse -> ServerResponse -> IO ()
 toNodeResponse res nodeRes = do
   let status = res.status.code
   headers <- mapHeaders res.headers
@@ -81,7 +81,7 @@ fromPromiseToNodeResponse errorHandler (MkPromise cont) nodeRes =
   in
     cont callbacks
 
-fromNodeRequest : Node.HTTP.Server.IncomingMessage -> RawHttpRequest
+fromNodeRequest : IncomingMessage -> RawHttpRequest
 fromNodeRequest nodeReq =
   let method = parseMethod nodeReq.method
       path = nodeReq.url

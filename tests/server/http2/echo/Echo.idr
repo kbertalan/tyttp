@@ -2,8 +2,8 @@ module Echo
 
 import Data.Buffer.Ext
 import Node
-import Node.HTTP2.Client
-import TyTTP.Adapter.Node.HTTP2 as HTTP2
+import Node.HTTP2
+import TyTTP.Adapter.Node.HTTP2
 import TyTTP
 import TyTTP.HTTP.Protocol
 import TyTTP.URL
@@ -24,8 +24,8 @@ hReflect ctx = do
 
 main : IO ()
 main = do
-  http2 <- require
-  server <- HTTP2.listen' { e = NodeError, pushIO = IO } $ \_, ctx => lift $ hReflect ctx
+  http2 <- HTTP2.require
+  server <- listen' { e = NodeError, pushIO = IO } $ \_, ctx => lift $ hReflect ctx
 
   defer $ do
     session <- http2.connect "http://localhost:3000" defaultOptions

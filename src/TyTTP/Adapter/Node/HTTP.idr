@@ -3,7 +3,8 @@ module TyTTP.Adapter.Node.HTTP
 import public Data.Buffer
 import Data.Buffer.Ext
 import public Node.Error
-import public Node.HTTP.Server
+import public Node.HTTP
+import public Node.Net.Server.Listen
 import TyTTP
 import public TyTTP.Adapter.Node.Error
 import TyTTP.HTTP
@@ -16,7 +17,7 @@ public export
 RawHttpResponse : Type
 RawHttpResponse = Response Status StringHeaders $ Publisher IO NodeError Buffer
 
-toNodeResponse : RawHttpResponse -> Node.HTTP.Server.ServerResponse -> IO ()
+toNodeResponse : RawHttpResponse -> ServerResponse -> IO ()
 toNodeResponse res nodeRes = do
   let status = res.status.code
   headers <- mapHeaders res.headers
@@ -25,7 +26,7 @@ toNodeResponse res nodeRes = do
   res.body.subscribe $ MkSubscriber
         { onNext = \a => nodeRes.write a Nothing }
         { onFailed = \e => pure () }
-        { onSucceded = \_ => nodeRes.end Nothing { d = Buffer} }
+        { onSucceded = \_ => nodeRes.end Nothing { d = Buffer } }
   where
     mapHeaders : StringHeaders -> IO Headers
     mapHeaders h = do
@@ -44,7 +45,7 @@ fromPromiseToNodeResponse errorHandler (MkPromise cont) nodeRes =
   in
     cont callbacks
 
-fromNodeRequest : Node.HTTP.Server.IncomingMessage -> RawHttpRequest
+fromNodeRequest : IncomingMessage -> RawHttpRequest
 fromNodeRequest nodeReq =
   let method = parseMethod nodeReq.method
       path = nodeReq.url
@@ -59,17 +60,17 @@ public export
 record Options e where
   constructor MkOptions
   listenOptions : Listen.Options
-  serverOptions : HTTP.Server.Options
+  serverOptions : HTTP.CreateServer.Options
   errorHandler : (e -> RawHttpResponse)
 
 export
 defaultOptions : Error e => Options e
 defaultOptions = MkOptions
-  { serverOptions = HTTP.Server.defaultOptions
-  , listenOptions =
+  { listenOptions =
     { port := Just 3000
     , host := Just "localhost"
     } Listen.defaultOptions
+  , serverOptions = HTTP.CreateServer.defaultOptions
   , errorHandler = \e => MkResponse
     { status = INTERNAL_SERVER_ERROR
     , headers =

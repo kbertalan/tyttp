@@ -1,7 +1,7 @@
 module Files
 
-import Data.Buffer
-import Node.HTTP.Client
+import Data.Buffer.Ext
+import Node.HTTP
 import Node
 import System.Directory
 import TyTTP.Adapter.Node.HTTP
@@ -41,10 +41,10 @@ main = eitherT putStrLn pure $ do
     | _ => putStrLn "There is no current folder"
 
   http <- HTTP.require
-  server <- HTTP.listen' $ routeDef "\{folder}/"
+  server <- listen' $ routeDef "\{folder}/"
 
   defer $ ignore $ http.get "http://localhost:3000/static/run" $ \res => do
       putStrLn $ show res.statusCode
-      onData res putStrLn
+      res.onData $ putStrLn . show
       server.close
 

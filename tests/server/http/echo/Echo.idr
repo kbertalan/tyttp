@@ -2,7 +2,7 @@ module Echo
 
 import Data.Buffer.Ext
 import Node
-import Node.HTTP.Client
+import Node.HTTP
 import TyTTP.Adapter.Node.HTTP as HTTP
 import TyTTP.HTTP
 
@@ -30,16 +30,16 @@ main = do
     ignore $ http.get "http://localhost:3000" $ \res => do
       putStrLn "GET"
       putStrLn $ show res.statusCode
-      onData res putStrLn
+      res.onData $ putStrLn . show
 
   defer $ do
     clientReq <- http.post "http://localhost:3000/the/resource" $ \res => do
       putStrLn "POST"
       putStrLn $ show res.statusCode
-      onData res putStrLn
+      res.onData $ putStrLn . show
       server.close
 
-    clientReq.write "Hello World!"
-    clientReq.write "With more chunks"
-    clientReq.end
+    clientReq.write "Hello World!" Nothing
+    clientReq.write "With more chunks" Nothing
+    clientReq.end Nothing { d = Buffer }
 

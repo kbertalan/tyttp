@@ -3,7 +3,7 @@ module Push
 import Data.IORef
 import Data.Buffer.Ext
 import Node
-import Node.HTTP2.Client
+import Node.HTTP2
 import TyTTP.Adapter.Node.HTTP2
 import TyTTP.HTTP
 import TyTTP.URL
@@ -11,7 +11,7 @@ import TyTTP.URL
 main : IO ()
 main = do
   http2 <- HTTP2.require
-  server <- HTTP2.listen' {e = String} $ \push =>
+  server <- listen' {e = String} $ \push =>
       routes' (sendText "Resource could not be found" >=> status NOT_FOUND)
         [ get $ pattern "/push" :> \step => do
             push $ MkContext

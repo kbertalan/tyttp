@@ -7,8 +7,6 @@ import Data.List
 import Control.Monad.Either
 import Node.Error
 import Node.FS
-import Node.FS.Stats
-import Node.FS.Stream
 import TyTTP.Adapter.Node.Error
 import TyTTP.Adapter.Node.HTTP
 import TyTTP.HTTP
@@ -70,7 +68,7 @@ hStatic folder returnError ctx = eitherT (flip returnError ctx) returnSuccess $ 
             { size = Stats.size stats
             , stream = MkPublisher $ \s => do
                 readStream.onData  s.onNext
-                readStream.onEnd   s.onSucceded
+                readStream.onEnd   $ s.onSucceded ()
                 readStream.onError s.onFailed
             , mime = mimeOf file
             }
