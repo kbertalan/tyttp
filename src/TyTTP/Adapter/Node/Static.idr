@@ -23,35 +23,34 @@ data FileServingError : Type where
   NotAFile : Resource -> FileServingError
 
 public export
-StaticRequest : (e : Type) -> Type -> Type
-StaticRequest e url = Context Method url Version StringHeaders Status StringHeaders (Publisher IO e Buffer) ()
+StaticRequest : Type -> Type
+StaticRequest url = Context Method url Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
 
 public export
-StaticResponse : (e : Type) -> Type -> Type
-StaticResponse e url = Context Method url Version StringHeaders Status StringHeaders (Publisher IO e Buffer) (Publisher IO e Buffer)
+StaticResponse : Type -> Type
+StaticResponse url = Context Method url Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) (Publisher IO NodeError Buffer)
 
-record StaticSuccesResult (e : Type) where
+record StaticSuccesResult where
   constructor MkStaticSuccessResult
   size : Int
-  stream : Publisher IO e Buffer
+  stream : Publisher IO NodeError Buffer
   mime : Mime
 
 export
-hStatic : Error e
-  => HasIO io
+hStatic : HasIO io
   => (folder : String)
   -> (returnError : FileServingError
-    -> StaticRequest e (URL a Path s)
-    -> io $ StaticResponse e (URL a Path s)
+    -> StaticRequest (URL a Path s)
+    -> io $ StaticResponse (URL a Path s)
   )
-  -> (ctx : StaticRequest e (URL a Path s))
-  -> io $ StaticResponse e (URL a Path s)
+  -> (ctx : StaticRequest (URL a Path s))
+  -> io $ StaticResponse (URL a Path s)
 hStatic folder returnError ctx = eitherT (flip returnError ctx) returnSuccess $ do
     let resource = ctx.request.url.path.rest
         file = "\{folder}\{resource}"
 
     fs <- FS.require
-    Right stats <- stat_sync StatsInt file
+    Right stats <- fs.statSync StatsInt file
       | Left e => throwError $ case code e of
          SystemError ENOENT => NotAFile resource
          _ => StatError e
@@ -62,7 +61,7 @@ hStatic folder returnError ctx = eitherT (flip returnError ctx) returnSuccess $ 
     False <- pure $ stats.isDirectory
       | _ => throwError $ NotAFile resource
 
-    readStream <- createReadStream file
+    readStream <- fs.createReadStream file
 
     pure $ MkStaticSuccessResult
             { size = Stats.size stats
@@ -74,7 +73,7 @@ hStatic folder returnError ctx = eitherT (flip returnError ctx) returnSuccess $ 
             }
 
   where
-    returnSuccess : Error e => StaticSuccesResult e -> io $ StaticResponse e (URL a Path s)
+    returnSuccess : StaticSuccesResult -> io $ StaticResponse (URL a Path s)
     returnSuccess result = do
       let hs = [ ("Content-Length", show $ result.size)
                , ("Content-Type", show $ result.mime)

@@ -19,10 +19,10 @@ sendError :
 sendError st str ctx = do
   sendText str ctx >>= status st
 
-routeDef : Error e
-  => String
-  -> StaticRequest e String
-  -> Promise e IO $ StaticResponse e String
+routeDef :
+  String
+  -> StaticRequest String
+  -> Promise NodeError IO $ StaticResponse String
 routeDef folder =
     let routingError = sendError NOT_FOUND "Resource could not be found"
         urlError = \err => sendError BAD_REQUEST "URL has invalid format"
