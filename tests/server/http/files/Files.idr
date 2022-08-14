@@ -36,14 +36,14 @@ routeDef folder =
           ]
 
 main : IO ()
-main = eitherT putStrLn pure $ do
+main = do
   Just folder <- currentDir
     | _ => putStrLn "There is no current folder"
 
   http <- HTTP.require
   server <- listen' $ routeDef "\{folder}/"
 
-  defer $ ignore $ http.get "http://localhost:3000/static/run" $ \res => do
+  defer $ ignore $ http.get "http://localhost:3000/static/run" defaultRequestOptions $ \res => do
       putStrLn $ show res.statusCode
       res.onData $ putStrLn . show
       server.close

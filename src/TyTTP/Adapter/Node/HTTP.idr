@@ -64,7 +64,7 @@ record Options e where
   errorHandler : (e -> RawHttpResponse)
 
 export
-defaultOptions : Error e => Options e
+defaultOptions : Error e => Adapter.Node.HTTP.Options e
 defaultOptions = MkOptions
   { listenOptions =
     { port := Just 3000
@@ -85,7 +85,7 @@ export
 listen : HasIO io
    => Error e
    => HTTP
-   -> Options e
+   -> Adapter.Node.HTTP.Options e
    -> ( 
     Context Method String Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
      -> Promise e IO $ Context Method String Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
