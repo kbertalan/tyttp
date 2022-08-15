@@ -29,10 +29,10 @@ certs:
 
 $(CA_FILE): certs
 	openssl genrsa 2048 > ./certs/ca-key.pem
-	openssl req -new -x509 -nodes -days 365000 -key ./certs/ca-key.pem -out $(CA_FILE)
+	openssl req -new -x509 -nodes -days 365000 -key ./certs/ca-key.pem -out $(CA_FILE) -subj "/CN=example.com"
 
 $(KEY_FILE): $(CA_FILE)
-	openssl req -newkey rsa:2048 -nodes -days 365000 -keyout $(KEY_FILE) -out ./certs/server-req.pem
+	openssl req -newkey rsa:2048 -nodes -days 365000 -keyout $(KEY_FILE) -out ./certs/server-req.pem -subj "/CN=example.com"
 
 $(CERT_FILE): $(KEY_FILE)
 	openssl x509 -req -days 365000 -set_serial 01 -in ./certs/server-req.pem -out $(CERT_FILE) -CA ./certs/ca-cert.pem -CAkey ./certs/ca-key.pem

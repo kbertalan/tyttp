@@ -27,13 +27,13 @@ main = do
   server <- HTTP.listen' { e = NodeError } :> hReflect
 
   defer $ do
-    ignore $ http.get "http://localhost:3000" defaultRequestOptions $ \res => do
+    ignore $ http.get "http://localhost:3000" defaultOptions $ \res => do
       putStrLn "GET"
       putStrLn $ show res.statusCode
       res.onData $ putStrLn . show
 
   defer $ do
-    clientReq <- http.post "http://localhost:3000/the/resource" defaultRequestOptions $ \res => do
+    clientReq <- http.post "http://localhost:3000/the/resource" defaultOptions $ \res => do
       putStrLn "POST"
       putStrLn $ show res.statusCode
       res.onData $ putStrLn . show
