@@ -36,3 +36,6 @@ sourcedir = "src"
 
 main = Main
 executable = tyttp
+
+brief = "An experimental web server framework targeting NodeJS"
+
