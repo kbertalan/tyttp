@@ -2,8 +2,8 @@ module Push
 
 import Data.IORef
 import Data.Buffer.Ext
-import Node
 import Node.HTTP2
+import Node.Timers
 import TyTTP.Adapter.Node.HTTP2
 import TyTTP.HTTP
 import TyTTP.URL
@@ -31,7 +31,7 @@ main = do
             sendText "this is the response" step >>= status OK
         ]
 
-  defer $ do
+  ignore $ setImmediate $ do
     session <- http2.connect "http://localhost:3000" defaultOptions
 
     counter <- newIORef 2

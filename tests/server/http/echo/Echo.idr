@@ -1,8 +1,8 @@
 module Echo
 
 import Data.Buffer.Ext
-import Node
 import Node.HTTP
+import Node.Timers
 import TyTTP.Adapter.Node.HTTP as HTTP
 import TyTTP.HTTP
 
@@ -26,13 +26,13 @@ main = do
   http <- require
   server <- HTTP.listen' { e = NodeError } :> hReflect
 
-  defer $ do
+  ignore $ setImmediate $ do
     ignore $ http.get "http://localhost:3000" defaultOptions $ \res => do
       putStrLn "GET"
       putStrLn $ show res.statusCode
       res.onData $ putStrLn . show
 
-  defer $ do
+  ignore $ setImmediate $ do
     clientReq <- http.post "http://localhost:3000/the/resource" defaultOptions $ \res => do
       putStrLn "POST"
       putStrLn $ show res.statusCode

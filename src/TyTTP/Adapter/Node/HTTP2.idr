@@ -4,9 +4,10 @@ import public Data.Buffer
 import Data.Buffer.Ext
 import Data.String
 import Data.Maybe
-import Node
 import public Node.Error
 import public Node.HTTP2
+import Node.JS.Misc
+import Node.JS.Std.JSON
 import public Node.Net.Server.Listen
 import TyTTP
 import TyTTP.URL
@@ -103,7 +104,7 @@ pusher parent ctx = do
         , (show Fields.Path, ctx.request.url.path)
         ]
   parent.pushStream reqHeaders $ \err, stream, headers => do
-    if exists err then putStrLn "ERROR" >> debugJsValue err
+    if truthy err then putStrLn "ERROR: \{JSON.stringify err 2}"
                   else sendResponse ctx.response stream
     where
       mapHeaders : StringHeaders -> io Headers

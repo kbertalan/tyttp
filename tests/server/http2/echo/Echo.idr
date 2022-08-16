@@ -1,8 +1,8 @@
 module Echo
 
 import Data.Buffer.Ext
-import Node
 import Node.HTTP2
+import Node.Timers
 import TyTTP.Adapter.Node.HTTP2
 import TyTTP
 import TyTTP.HTTP.Protocol
@@ -27,7 +27,7 @@ main = do
   http2 <- HTTP2.require
   server <- listen' { e = NodeError, pushIO = IO } $ \_, ctx => lift $ hReflect ctx
 
-  defer $ do
+  ignore $ setImmediate $ do
     session <- http2.connect "http://localhost:3000" defaultOptions
     stream <- session.get "/" =<< Headers.empty
     stream.onResponse $ \headers => do
@@ -35,7 +35,7 @@ main = do
       onData stream putStr
       session.close
 
-  defer $ do
+  ignore $ setImmediate $ do
     session <- http2.connect "http://localhost:3000" defaultOptions
     stream <- session.post "/the/resource" =<< Headers.empty 
     stream.onResponse $ \headers => do

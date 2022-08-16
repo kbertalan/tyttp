@@ -2,7 +2,7 @@ module Files
 
 import Data.Buffer.Ext
 import Node.HTTP
-import Node
+import Node.Timers
 import System.Directory
 import TyTTP.Adapter.Node.HTTP
 import TyTTP.Adapter.Node.Static
@@ -43,7 +43,7 @@ main = do
   http <- HTTP.require
   server <- listen' $ routeDef "\{folder}/"
 
-  defer $ ignore $ http.get "http://localhost:3000/static/run" defaultOptions $ \res => do
+  ignore $ setImmediate $ ignore $ http.get "http://localhost:3000/static/run" defaultOptions $ \res => do
       putStrLn $ show res.statusCode
       res.onData $ putStrLn . show
       server.close
