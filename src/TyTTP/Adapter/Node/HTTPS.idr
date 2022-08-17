@@ -103,7 +103,12 @@ listen : HasIO io
       )
    -> io Server
 listen https options handler = do
-  server <- https.createServer options.netServerOptions options.tlsServerOptions options.tlsContextOptions options.serverOptions
+  server <- https.createServer $ MkOptions
+              { server = options.serverOptions
+              , context = options.tlsContextOptions
+              , tls = options.tlsServerOptions
+              , net = options.netServerOptions
+              }
 
   server.onRequest $ \req => \res => do
     let handlerReq = fromNodeRequest req

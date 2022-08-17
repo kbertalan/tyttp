@@ -152,7 +152,10 @@ listen : HasIO io
       )
    -> io Http2Server
 listen http2 options handler = do
-  server <- http2.createServer options.netServerOptions options.serverOptions
+  server <- http2.createServer $ MkOptions
+                { server = options.serverOptions
+                , net = options.netServerOptions
+                }
 
   server.onStream $ \stream, headers => do
     let Right req = parseRequest stream headers
@@ -226,7 +229,12 @@ namespace Secure
         )
      -> io Http2Server
   listen http2 options handler = do
-    server <- http2.createSecureServer options.netServerOptions options.tlsServerOptions options.tlsContextOptions options.serverOptions
+    server <- http2.createSecureServer $ MkOptions
+                  { server = options.serverOptions
+                  , context = options.tlsContextOptions
+                  , tls = options.tlsServerOptions
+                  , net = options.netServerOptions
+                  }
 
     server.onStream $ \stream, headers => do
       let Right req = parseRequest stream headers
