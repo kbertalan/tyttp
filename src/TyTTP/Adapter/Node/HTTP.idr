@@ -4,10 +4,11 @@ import public Data.Buffer
 import Data.Buffer.Ext
 import public Node.Error
 import public Node.HTTP
-import public Node.Net.Server.Listen
 import TyTTP
 import public TyTTP.Adapter.Node.Error
 import TyTTP.HTTP
+
+%hide Node.Net.Server.Server
 
 public export
 RawHttpRequest : Type

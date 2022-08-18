@@ -13,6 +13,7 @@ import TyTTP.HTTP
 import TyTTP.URL
 
 %hide Node.HTTP.Server.Server
+%hide Node.Net.Server.Server
 
 public export
 RawHttpRequest : Type
