@@ -16,11 +16,11 @@ import TyTTP.URL
 
 public export
 RawHttpRequest : Type
-RawHttpRequest = HttpRequest String StringHeaders $ Publisher IO NodeError Buffer
+RawHttpRequest = HttpRequest String StringHeaders $ Publisher IO Error Buffer
 
 public export
 RawHttpResponse : Type
-RawHttpResponse = Response Status StringHeaders $ Publisher IO NodeError Buffer
+RawHttpResponse = Response Status StringHeaders $ Publisher IO Error Buffer
 
 public export
 record Options e where
@@ -47,9 +47,9 @@ defaultOptions = MkOptions
     { status = INTERNAL_SERVER_ERROR
     , headers =
       [ ("Content-Type", "text/plain")
-      , ("Content-Length", show $ length $ message e)
+      , ("Content-Length", show $ length $ TyTTP.Core.Error.message e)
       ]
-    , body = singleton $ fromString $ message e
+    , body = singleton $ fromString $ TyTTP.Core.Error.message e
     }
   }
 
@@ -71,7 +71,7 @@ toNodeResponse res nodeRes = do
 
 fromPromiseToNodeResponse : Error e
   => (e -> RawHttpResponse)
-  -> Promise e IO (Context Method String Version StringHeaders Status StringHeaders b $ Publisher IO NodeError Buffer)
+  -> Promise e IO (Context Method String Version StringHeaders Status StringHeaders b $ Publisher IO Error Buffer)
   -> ServerResponse
   -> IO ()
 fromPromiseToNodeResponse errorHandler (MkPromise cont) nodeRes =
@@ -98,8 +98,8 @@ listen : HasIO io
    => HTTPS
    -> HTTPS.Options e
    -> (
-        Context Method String Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-        -> Promise e IO $ Context Method String Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
+        Context Method String Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) ()
+        -> Promise e IO $ Context Method String Version StringHeaders Status StringHeaders b (Publisher IO Error Buffer)
       )
    -> io Server
 listen https options handler = do

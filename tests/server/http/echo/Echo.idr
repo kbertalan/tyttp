@@ -6,12 +6,12 @@ import Node.Timers
 import TyTTP.Adapter.Node.HTTP as HTTP
 import TyTTP.HTTP
 
-hReflect : Context Method String Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-  -> IO $ Context Method String Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) (Publisher IO NodeError Buffer)
+hReflect : Context Method String Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) ()
+  -> IO $ Context Method String Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) (Publisher IO Error Buffer)
 hReflect ctx = do
   let m = ctx.request.method
       h = ctx.request.headers
-      p : Publisher IO NodeError Buffer = MkPublisher $ \s => do
+      p : Publisher IO Error Buffer = MkPublisher $ \s => do
         s.onNext $ fromString "method -> \{show m}"
         s.onNext $ fromString "url -> \{ctx.request.url}"
         s.onNext $ fromString "version -> \{show ctx.request.version}"
@@ -24,7 +24,7 @@ hReflect ctx = do
 main : IO ()
 main = do
   http <- require
-  server <- HTTP.listen' { e = NodeError } :> hReflect
+  server <- HTTP.listen' { e = Error } :> hReflect
 
   ignore $ setImmediate $ do
     ignore $ http.get "http://localhost:3000" defaultOptions $ \res => do

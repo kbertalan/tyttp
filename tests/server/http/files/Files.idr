@@ -22,7 +22,7 @@ sendError st str ctx = do
 routeDef :
   String
   -> StaticRequest String
-  -> Promise NodeError IO $ StaticResponse String
+  -> Promise Error IO $ StaticResponse String
 routeDef folder =
     let routingError = sendError NOT_FOUND "Resource could not be found"
         urlError = \err => sendError BAD_REQUEST "URL has invalid format"
@@ -31,7 +31,7 @@ routeDef folder =
         routes' routingError
           [ get $ pattern "/static/*" :> hStatic folder $ flip $ \ctx =>
               \case
-                StatError e => sendError INTERNAL_SERVER_ERROR ("File error: " <+> message e) ctx
+                StatError e => sendError INTERNAL_SERVER_ERROR ("File error: " <+> TyTTP.Core.Error.message e) ctx
                 NotAFile s => sendError NOT_FOUND ("Could not found file: " <+> s) ctx
           ]
 

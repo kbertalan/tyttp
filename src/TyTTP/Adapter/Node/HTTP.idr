@@ -11,11 +11,11 @@ import TyTTP.HTTP
 
 public export
 RawHttpRequest : Type
-RawHttpRequest = HttpRequest String StringHeaders $ Publisher IO NodeError Buffer
+RawHttpRequest = HttpRequest String StringHeaders $ Publisher IO Error Buffer
 
 public export
 RawHttpResponse : Type
-RawHttpResponse = Response Status StringHeaders $ Publisher IO NodeError Buffer
+RawHttpResponse = Response Status StringHeaders $ Publisher IO Error Buffer
 
 toNodeResponse : RawHttpResponse -> ServerResponse -> IO ()
 toNodeResponse res nodeRes = do
@@ -35,7 +35,7 @@ toNodeResponse res nodeRes = do
 
 fromPromiseToNodeResponse : Error e
   => (e -> RawHttpResponse)
-  -> Promise e IO (Context Method String Version StringHeaders Status StringHeaders b $ Publisher IO NodeError Buffer)
+  -> Promise e IO (Context Method String Version StringHeaders Status StringHeaders b $ Publisher IO Error Buffer)
   -> ServerResponse
   -> IO ()
 fromPromiseToNodeResponse errorHandler (MkPromise cont) nodeRes =
@@ -75,9 +75,9 @@ defaultOptions = MkOptions
     { status = INTERNAL_SERVER_ERROR
     , headers =
       [ ("Content-Type", "text/plain")
-      , ("Content-Length", show $ length $ message e)
+      , ("Content-Length", show $ length $ TyTTP.Core.Error.message e)
       ]
-    , body = singleton $ fromString $ message e
+    , body = singleton $ fromString $ TyTTP.Core.Error.message e
     }
   }
 
@@ -87,8 +87,8 @@ listen : HasIO io
    => HTTP
    -> Adapter.Node.HTTP.Options e
    -> ( 
-    Context Method String Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-     -> Promise e IO $ Context Method String Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
+    Context Method String Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) ()
+     -> Promise e IO $ Context Method String Version StringHeaders Status StringHeaders b (Publisher IO Error Buffer)
   )
    -> io Server
 listen http options handler = do
@@ -109,8 +109,8 @@ listen' : HasIO io
    => Error e
    => { auto http : HTTP }
    -> ( 
-    Context Method String Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-     -> Promise e IO $ Context Method String Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
+    Context Method String Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) ()
+     -> Promise e IO $ Context Method String Version StringHeaders Status StringHeaders b (Publisher IO Error Buffer)
   )
    -> io Server
 listen' {http} handler = listen http defaultOptions handler

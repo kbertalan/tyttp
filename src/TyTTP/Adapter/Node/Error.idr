@@ -1,9 +1,9 @@
 module TyTTP.Adapter.Node.Error
 
-import Node.Error
+import Node.Error as Node
 import TyTTP
 
 export
-Error NodeError where
+Error Node.Error where
   message = Node.Error.message
 

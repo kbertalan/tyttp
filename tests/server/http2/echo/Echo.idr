@@ -8,12 +8,12 @@ import TyTTP
 import TyTTP.HTTP.Protocol
 import TyTTP.URL
 
-hReflect : Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-  -> IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) (Publisher IO NodeError Buffer)
+hReflect : Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) ()
+  -> IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) (Publisher IO Error Buffer)
 hReflect ctx = do
   let m = ctx.request.method
       h = ctx.request.headers
-      p : Publisher IO NodeError Buffer = MkPublisher $ \s => do
+      p : Publisher IO Error Buffer = MkPublisher $ \s => do
         s.onNext $ fromString "method -> \{show m}\n"
         s.onNext $ fromString "path -> \{ctx.request.url.path}\n"
         s.onNext $ fromString "headers ->\n"
@@ -25,7 +25,7 @@ hReflect ctx = do
 main : IO ()
 main = do
   http2 <- HTTP2.require
-  server <- listen' { e = NodeError, pushIO = IO } $ \_, ctx => lift $ hReflect ctx
+  server <- listen' { e = Error, pushIO = IO } $ \_, ctx => lift $ hReflect ctx
 
   ignore $ setImmediate $ do
     session <- http2.connect "http://localhost:3000" defaultOptions

@@ -24,16 +24,16 @@ data FileServingError : Type where
 
 public export
 StaticRequest : Type -> Type
-StaticRequest url = Context Method url Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
+StaticRequest url = Context Method url Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) ()
 
 public export
 StaticResponse : Type -> Type
-StaticResponse url = Context Method url Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) (Publisher IO NodeError Buffer)
+StaticResponse url = Context Method url Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) (Publisher IO Error Buffer)
 
 record StaticSuccesResult where
   constructor MkStaticSuccessResult
   size : Int
-  stream : Publisher IO NodeError Buffer
+  stream : Publisher IO Error Buffer
   mime : Mime
 
 export

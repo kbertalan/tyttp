@@ -41,15 +41,15 @@ namespace Fields
 
 public export
 RawHttpRequest : Type
-RawHttpRequest = HttpRequest SimpleURL StringHeaders $ Publisher IO NodeError Buffer
+RawHttpRequest = HttpRequest SimpleURL StringHeaders $ Publisher IO Error Buffer
 
 public export
 RawHttpResponse : Type
-RawHttpResponse = Response Status StringHeaders $ Publisher IO NodeError Buffer
+RawHttpResponse = Response Status StringHeaders $ Publisher IO Error Buffer
 
 public export
 PushContext : Type
-PushContext = Context Method SimpleURL Version StringHeaders Status StringHeaders () $ Publisher IO NodeError Buffer
+PushContext = Context Method SimpleURL Version StringHeaders Status StringHeaders () $ Publisher IO Error Buffer
 
 sendResponse : RawHttpResponse -> ServerHttp2Stream -> IO ()
 sendResponse res stream = do
@@ -69,13 +69,13 @@ sendResponse res stream = do
 
 sendResponseFromPromise : Error e
   => (String -> RawHttpResponse)
-  -> Promise e IO (Context Method SimpleURL Version StringHeaders Status StringHeaders b $ Publisher IO NodeError Buffer)
+  -> Promise e IO (Context Method SimpleURL Version StringHeaders Status StringHeaders b $ Publisher IO Error Buffer)
   -> ServerHttp2Stream
   -> IO ()
 sendResponseFromPromise errorHandler (MkPromise cont) stream =
   let callbacks = MkCallbacks
         { onSucceded = \a => sendResponse a.response stream }
-        { onFailed = \e => sendResponse (errorHandler $ message e) stream }
+        { onFailed = \e => sendResponse (errorHandler $ TyTTP.Core.Error.message e) stream }
   in
     cont callbacks
 
@@ -147,8 +147,8 @@ listen : HasIO io
    -> HTTP2.Options
    -> (
         (Lazy PushContext -> pushIO ())
-        -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-        -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
+        -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) ()
+        -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO Error Buffer)
       )
    -> io Http2Server
 listen http2 options handler = do
@@ -177,8 +177,8 @@ listen' : HasIO io
    => { auto http2 : HTTP2 }
    -> (
         (Lazy PushContext -> pushIO ())
-        -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-        -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
+        -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) ()
+        -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO Error Buffer)
       )
    -> io Http2Server
 listen' {http2} handler = listen http2 defaultOptions handler
@@ -224,8 +224,8 @@ namespace Secure
      -> HTTP2.Secure.Options
      -> (
           (Lazy PushContext -> pushIO ())
-          -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO NodeError Buffer) ()
-          -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO NodeError Buffer)
+          -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) ()
+          -> Promise e IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders b (Publisher IO Error Buffer)
         )
      -> io Http2Server
   listen http2 options handler = do
