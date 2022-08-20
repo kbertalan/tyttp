@@ -85,7 +85,7 @@ defaultOptions = MkOptions
 export
 listen : HasIO io
    => Error e
-   => HTTP
+   => HTTPModule
    -> Adapter.Node.HTTP.Options e
    -> ( 
     Context Method String Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) ()
@@ -108,7 +108,7 @@ listen http options handler = do
 export
 listen' : HasIO io
    => Error e
-   => { auto http : HTTP }
+   => { auto http : HTTPModule }
    -> ( 
     Context Method String Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) ()
      -> Promise e IO $ Context Method String Version StringHeaders Status StringHeaders b (Publisher IO Error Buffer)

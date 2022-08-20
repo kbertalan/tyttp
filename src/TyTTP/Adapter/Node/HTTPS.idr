@@ -96,7 +96,7 @@ fromNodeRequest nodeReq =
 export
 listen : HasIO io
    => Error e
-   => HTTPS
+   => HTTPSModule
    -> HTTPS.Options e
    -> (
         Context Method String Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) ()

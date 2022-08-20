@@ -142,7 +142,7 @@ export
 listen : HasIO io
    => HasIO pushIO
    => Error e
-   => HTTP2
+   => HTTP2Module
    -> HTTP2.Options
    -> (
         (Lazy PushContext -> pushIO ())
@@ -173,7 +173,7 @@ export
 listen' : HasIO io
    => HasIO pushIO
    => Error e
-   => { auto http2 : HTTP2 }
+   => { auto http2 : HTTP2Module }
    -> (
         (Lazy PushContext -> pushIO ())
         -> Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) ()
@@ -219,7 +219,7 @@ namespace Secure
   listen : HasIO io
      => HasIO pushIO
      => Error e
-     => HTTP2
+     => HTTP2Module
      -> HTTP2.Secure.Options
      -> (
           (Lazy PushContext -> pushIO ())
