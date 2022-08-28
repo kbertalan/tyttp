@@ -32,7 +32,7 @@ main = do
     stream <- session.get "/" =<< Headers.empty
     stream.onResponse $ \headers => do
       putStrLn "GET"
-      onData stream putStr
+      stream.onData $ putStr . show
       session.close
 
   ignore $ setImmediate $ do
@@ -40,11 +40,11 @@ main = do
     stream <- session.post "/the/resource" =<< Headers.empty 
     stream.onResponse $ \headers => do
       putStrLn "POST"
-      onData stream $ putStr
+      stream.onData $ putStr . show
       session.close
       server.close
 
-    stream.write "Hello World!\n"
-    stream.write "With more chunks\n"
-    stream.end
+    stream.write "Hello World!\n" Nothing
+    stream.write "With more chunks\n" Nothing
+    stream.end Nothing
 

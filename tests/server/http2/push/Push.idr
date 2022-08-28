@@ -48,13 +48,13 @@ main = do
       stream.onPush $ \headers => putStrLn $ show $ filter (\(a,b) => a /= "date") $ headers.asList
       putStrLn "PUSH"
       putStrLn $ show headers.asList
-      onData stream putStr
-      onEnd stream closer
+      stream.onData $ putStr . show
+      stream.onEnd closer
 
     stream <- session.get "/push" =<< empty
     stream.onResponse $ \headers => do
       putStrLn "GET"
-      onData stream putStr
-      onEnd stream closer
+      stream.onData $ putStr . show
+      stream.onEnd closer
 
-    stream.end
+    stream.end Nothing
