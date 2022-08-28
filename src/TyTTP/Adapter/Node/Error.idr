@@ -4,6 +4,6 @@ import Node.Error as Node
 import TyTTP
 
 export
-Error Node.Error where
-  message = Node.Error.message
+Node.ErrorClass e => Error e where
+  message = Node.(.message)
 

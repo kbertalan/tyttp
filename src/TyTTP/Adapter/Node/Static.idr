@@ -51,7 +51,7 @@ hStatic folder returnError ctx = eitherT (flip returnError ctx) returnSuccess $ 
 
     fs <- FS.require
     Right stats <- fs.statSync StatsInt file
-      | Left e => throwError $ case code e of
+      | Left e => throwError $ case e.code of
          SystemError ENOENT => NotAFile resource
          _ => StatError e
 
