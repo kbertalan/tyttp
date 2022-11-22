@@ -1,4 +1,5 @@
 1/1: Building Echo (Echo.idr)
+Now compiling the executable: test
 GET
 200
 method -> GET

@@ -1,4 +1,5 @@
 1/1: Building Push (Push.idr)
+Now compiling the executable: test
 PUSH
 [(":scheme", "http"), (":authority", "localhost:3000"), (":method", "GET"), (":path", "/pushed.txt")]
 GET

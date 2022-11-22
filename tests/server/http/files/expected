@@ -1,4 +1,5 @@
 1/1: Building Files (Files.idr)
+Now compiling the executable: test
 200
 rm -rf build
 
