@@ -3,7 +3,6 @@ module TyTTP.HTTP.Consumer
 import Control.Monad.Trans
 import Control.Monad.Either
 import Data.Buffer
-import Data.Buffer.Ext
 import Data.List
 import public Data.List.Quantifiers
 import Data.Maybe
@@ -50,7 +49,7 @@ unsafeConsumeBody handler ctx = promise $ \resolve', reject' => do
         { onNext = \a => modifyIORef acc (:< a)
         , onSucceded = \_ => do
             all <- concatBuffers =<< asList <$> readIORef acc
-            emptyBuffer <- Ext.newBuffer 0
+            Just emptyBuffer <- newBuffer 0 | _ => assert_total $ idris_crash "creating an empty buffer has failed"
             let result = handler $ { request.body := fromMaybe emptyBuffer all } ctx
             runPromise { m = m } resolve' reject' result
         , onFailed = reject'

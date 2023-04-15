@@ -1,0 +1,23 @@
+package tyttp-adapter-node
+
+modules = TyTTP.Adapter.Node.Error
+  , TyTTP.Adapter.Node.HTTP
+  , TyTTP.Adapter.Node.HTTPS
+  , TyTTP.Adapter.Node.HTTP2
+  , TyTTP.Adapter.Node.Static
+  , TyTTP.Adapter.Node.URI
+
+depends = apache-mime-types
+  , node
+  , promise
+  , tyttp
+
+opts      = "--codegen node"
+
+sourcedir = "src"
+
+main = Main
+executable = tyttp-node
+
+brief = "An experimental web server framework targeting NodeJS"
+

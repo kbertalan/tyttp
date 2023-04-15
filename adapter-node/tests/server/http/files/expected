@@ -1,0 +1,8 @@
+200
+rm -rf build
+
+pack -q build test.ipkg
+[ -f build/exec/test ] && node build/exec/test
+
+
+

@@ -1,0 +1,12 @@
+[custom.all.tyttp]
+type = "local"
+path = "."
+ipkg = "tyttp.ipkg"
+test = "tests/tests.ipkg"
+
+[custom.all.tyttp-adapter-node]
+type = "local"
+path = "./adapter-node"
+ipkg = "tyttp-adapter-node.ipkg"
+test = "tests/tests.ipkg"
+

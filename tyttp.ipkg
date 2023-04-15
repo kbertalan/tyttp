@@ -1,12 +1,6 @@
 package tyttp
 
 modules = TyTTP
-  , TyTTP.Adapter.Node.Error
-  , TyTTP.Adapter.Node.HTTP
-  , TyTTP.Adapter.Node.HTTPS
-  , TyTTP.Adapter.Node.HTTP2
-  , TyTTP.Adapter.Node.Static
-  , TyTTP.Adapter.Node.URI
   , TyTTP.Core.Context
   , TyTTP.Core.Error
   , TyTTP.Core.Request
@@ -28,14 +22,8 @@ depends = base
   , apache-mime-types
   , contrib
   , promise
-  , node
-
-opts      = "--codegen node"
 
 sourcedir = "src"
-
-main = Main
-executable = tyttp
 
 brief = "An experimental web server framework targeting NodeJS"
 

@@ -1,0 +1,20 @@
+GET
+method -> GET
+path -> /
+headers ->
+	:method : GET
+	:path : /
+	:authority : localhost:3000
+	:scheme : http
+body ->
+POST
+method -> POST
+path -> /the/resource
+headers ->
+	:method : POST
+	:path : /the/resource
+	:authority : localhost:3000
+	:scheme : http
+body ->
+Hello World!
+With more chunks

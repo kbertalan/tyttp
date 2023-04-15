@@ -1,7 +1,0 @@
-package test
-
-depends = tyttp, apache-mime-types, promise, node
-modules = Files
-main = Files
-executable = test
-opts = "--no-color --console-width 0"
