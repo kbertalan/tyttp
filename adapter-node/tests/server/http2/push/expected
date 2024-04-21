@@ -1,5 +1,5 @@
 PUSH
-[(":scheme", "http"), (":authority", "localhost:3000"), (":method", "GET"), (":path", "/pushed.txt")]
+[(":path", "/pushed.txt"), (":method", "GET"), (":authority", "localhost:3000"), (":scheme", "http")]
 GET
 [(":status", ""), ("content-type", "text/plain")]
 this is the response

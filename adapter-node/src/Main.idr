@@ -1,34 +1,32 @@
 module Main
 
-import System
-import System.File.ReadWrite
-import TyTTP.Adapter.Node.HTTPS
+import TyTTP.Adapter.Node.HTTP
 import TyTTP.HTTP
 import TyTTP.URL
 
 main : IO ()
 main = do
-  Just keyFile <- getEnv "KEY_FILE"
-    | Nothing => putStrLn "Environment variable \"KEY_FILE\" is not set"
-  Right key <- readFile keyFile
-    | Left e => putStrLn "Could not read file \{keyFile}, reason: \{show e}"
+  http <- Node.HTTP.require
 
-  Just certFile <- getEnv "CERT_FILE"
-    | Nothing => putStrLn "environment variable \"CERT_FILE\" is not set"
-  Right cert <- readFile certFile
-    | Left e => putStrLn "Could not read file \{certFile}, reason: \{show e}"
+  -- must set host to 0.0.0.0 if it is running in docker, otherwise
+  -- let options = Node.HTTP.defaultOptions
+  -- would be enough
+  let options = { listenOptions :=
+                    { port := Just 3000
+                    , host := Just "0.0.0.0"
+                    } Listen.defaultOptions
+                } Node.HTTP.defaultOptions
 
-  let options = { tlsContextOptions.cert := [cert]
-                , tlsContextOptions.key := [key]
-                } HTTPS.defaultOptions
-
-  https <- HTTPS.require
-  ignore $ listen https options { e = String }
+  ignore $ listen http options { e = String }
     $ parseUrl' (const $ sendText "URL has invalid format" >=> status BAD_REQUEST)
     :> routes' (sendText "Resource could not be found" >=> status NOT_FOUND)
-        [ get $ pattern "/query" $ \ctx =>
+        [ get $ pattern "/query" $ \ctx => do
+            putStrLn "serving query"
             sendText ctx.request.url.search ctx >>= status OK
-        , get $ pattern "/parsed" $ Simple.search $ \ctx =>
+        , get $ pattern "/parsed" $ Simple.search $ \ctx => do
+            putStrLn "serving parsed"
             sendText (show ctx.request.url.search) ctx >>= status OK
         ]
 
+  let Just port = options.listenOptions.port | Nothing => pure ()
+  putStrLn $ "started server on port " <+> show port

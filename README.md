@@ -33,14 +33,23 @@ Known consumers and producers:
 
 # Build
 
-    make clean
-    make build
+    pack build tyttp.ipkg
+    pack build adapter-node/tyttp-adapter-node.ipkg
 
-# Dev
+# Test
 
-    make dev
+    pack test tyttp
+    pack test tyttp-adapter-node
 
-# Distribution
+# Run a sample from tyttp-adapter-node
 
-    make dist
+    pack run tyttp-adapter-node
 
+# Run all builds and tests via docker
+
+    docker build . -t tyttp:latest
+    docker run --rm -it -p 3000:3000 tyttp:latest
+
+Then you can access the running application on port 3000:
+
+    curl http://localhost:3000/query?query-string=will-be-sent-back
