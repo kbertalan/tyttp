@@ -2,19 +2,19 @@ GET
 method -> GET
 path -> /
 headers ->
-	:scheme : http
 	:authority : localhost:3000
-	:path : /
 	:method : GET
+	:path : /
+	:scheme : http
 body ->
 POST
 method -> POST
 path -> /the/resource
 headers ->
-	:scheme : http
 	:authority : localhost:3000
-	:path : /the/resource
 	:method : POST
+	:path : /the/resource
+	:scheme : http
 body ->
 Hello World!
 With more chunks

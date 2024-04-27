@@ -1,6 +1,7 @@
 module Echo
 
 import Data.Buffer.Ext
+import Data.List
 import Node.HTTP2
 import Node.Timers
 import TyTTP.Adapter.Node.HTTP2
@@ -12,7 +13,7 @@ hReflect : Context Method SimpleURL Version StringHeaders Status StringHeaders (
   -> IO $ Context Method SimpleURL Version StringHeaders Status StringHeaders (Publisher IO Error Buffer) (Publisher IO Error Buffer)
 hReflect ctx = do
   let m = ctx.request.method
-      h = ctx.request.headers
+      h = sort ctx.request.headers
       p : Publisher IO Error Buffer = MkPublisher $ \s => do
         s.onNext $ fromString "method -> \{show m}\n"
         s.onNext $ fromString "path -> \{ctx.request.url.path}\n"
@@ -37,7 +38,7 @@ main = do
 
   ignore $ setImmediate $ do
     session <- http2.connect "http://localhost:3000" defaultOptions
-    stream <- session.post "/the/resource" =<< Headers.empty 
+    stream <- session.post "/the/resource" =<< Headers.empty
     stream.onResponse $ \headers => do
       putStrLn "POST"
       stream.onData $ putStr . show
@@ -47,4 +48,3 @@ main = do
     stream.write "Hello World!\n" Nothing
     stream.write "With more chunks\n" Nothing
     stream.end Nothing
-

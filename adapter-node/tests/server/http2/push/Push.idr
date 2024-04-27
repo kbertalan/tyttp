@@ -1,7 +1,8 @@
 module Push
 
-import Data.IORef
 import Data.Buffer.Ext
+import Data.IORef
+import Data.List
 import Node.HTTP2
 import Node.Timers
 import TyTTP.Adapter.Node.HTTP2
@@ -47,7 +48,7 @@ main = do
     session.onStream $ \stream, headers => do
       stream.onPush $ \headers => putStrLn $ show $ filter (\(a,b) => a /= "date") $ headers.asList
       putStrLn "PUSH"
-      putStrLn $ show headers.asList
+      putStrLn $ show $ sort headers.asList
       stream.onData $ putStr . show
       stream.onEnd closer
 
