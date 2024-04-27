@@ -1,3 +1,5 @@
+.pack/
+.direnv/
 node_modules/
 build/
 certs/
