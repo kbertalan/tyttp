@@ -4,9 +4,14 @@ path = "."
 ipkg = "tyttp.ipkg"
 test = "tests/tests.ipkg"
 
+[custom.all.tyttp-json]
+type = "local"
+path = "./json"
+ipkg = "tyttp-json.ipkg"
+# test = "tests/runtests.ipkg"
+
 [custom.all.tyttp-adapter-node]
 type = "local"
 path = "./adapter-node"
 ipkg = "tyttp-adapter-node.ipkg"
 test = "tests/tests.ipkg"
-

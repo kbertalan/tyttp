@@ -1,0 +1,14 @@
+package test
+
+depends = tyttp
+  , promise
+  , tyttp-json
+  , json
+  , sop
+  , elab-util
+  , apache-mime-types
+  , node
+modules = JSONServer
+main = JSONServer
+executable = test
+opts = "--no-color --console-width 0"

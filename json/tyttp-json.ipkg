@@ -1,0 +1,19 @@
+package tyttp-json
+
+modules = TyTTP.HTTP.Consumer.JSON
+  , TyTTP.HTTP.Producer.JSON
+
+depends = tyttp
+  , promise
+  , contrib
+  , json
+  , sop
+  , elab-util
+  , apache-mime-types
+  , node
+
+opts      = "--codegen node"
+sourcedir = "src"
+
+brief = "JSON payload consumer and producer for TyTTP web framework"
+
