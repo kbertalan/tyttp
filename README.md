@@ -29,16 +29,18 @@ Supporting multiple formats can introduce many dependencies, so their handling i
 
 Known consumers and producers:
 
-- [json](https://github.com/kbertalan/tyttp-json) for supporting `application/json`
+- [json](https://github.com/kbertalan/tyttp/tree/main/json) for supporting `application/json`
 
 # Build
 
     pack build tyttp.ipkg
+    pack build json/tyttp-json.ipkg
     pack build adapter-node/tyttp-adapter-node.ipkg
 
 # Test
 
     pack test tyttp
+    pack test tyttp-json
     pack test tyttp-adapter-node
 
 # Run a sample from tyttp-adapter-node

@@ -1,6 +1,6 @@
 # tyttp-json
 
-JSON body consumer and producer for [tyttp](https://github.com/kbertalan/tyttp)
+JSON body consumer and producer for TyTTP
 
 Enables using
 
@@ -11,4 +11,3 @@ and
     sendJSON someToJSONValue context
 
 in your tyttp expression.
-
