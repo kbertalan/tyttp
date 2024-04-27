@@ -8,7 +8,7 @@ test = "tests/tests.ipkg"
 type = "local"
 path = "./json"
 ipkg = "tyttp-json.ipkg"
-# test = "tests/runtests.ipkg"
+test = "tests/tests.ipkg"
 
 [custom.all.tyttp-adapter-node]
 type = "local"

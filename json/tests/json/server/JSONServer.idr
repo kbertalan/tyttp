@@ -1,8 +1,8 @@
 module JSONServer
 
 import Data.Buffer.Ext
-import Generics.Derive
 import JSON
+import JSON.Derive
 import TyTTP.Adapter.Node.HTTP
 import TyTTP.Adapter.Node.URI
 import TyTTP.HTTP
@@ -19,7 +19,7 @@ record Example where
   field : String
   opt : Maybe Int
 
-%runElab derive "Example" [Generic, Meta, Show, Eq, RecordToJSON, RecordFromJSON]
+%runElab derive "Example" [Show, Eq, ToJSON, FromJSON]
 
 main : IO ()
 main = do

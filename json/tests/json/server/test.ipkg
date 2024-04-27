@@ -1,8 +1,9 @@
 package test
 
 depends = tyttp
-  , promise
+  , tyttp-adapter-node
   , tyttp-json
+  , promise
   , json
   , sop
   , elab-util
@@ -11,4 +12,4 @@ depends = tyttp
 modules = JSONServer
 main = JSONServer
 executable = test
-opts = "--no-color --console-width 0"
+opts = "--no-color --console-width 0 --codegen node"
