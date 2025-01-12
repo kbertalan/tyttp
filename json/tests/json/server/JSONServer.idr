@@ -32,8 +32,14 @@ main = do
             $ pattern "/json"
             $ consumes' [JSON]
                 { a = Example }
-                (\ctx => sendText "Content cannot be parsed: \{ctx.request.body}" ctx >>= status BAD_REQUEST)
-            $ \ctx => sendJSON ctx.request.body ctx >>= status OK
+                (
+                  \ctx => liftPromise $ do
+                    printLn "failure"
+                    sendText "Content cannot be parsed: \{ctx.request.body}" ctx >>= status BAD_REQUEST
+                )
+            $ \ctx => liftPromise $ do
+              printLn "success"
+              sendJSON ctx.request.body ctx >>= status OK
         ]
 
   req <- http.request "http://localhost:3000/json" ({ request.method := "POST", request.headers := Just (singleton "Content-Type" "application/json") } defaultOptions) $ \res => do
