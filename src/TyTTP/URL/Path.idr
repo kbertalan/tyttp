@@ -53,11 +53,12 @@ parse s = map (MkParsedPattern . reverse) $ go (InLiteral []) [] $ unpack s
     go (InLiteral s) p ('{' :: xs) = go (InParam []) (Literal (reverse s) :: p) xs
     go (InLiteral []) p r@('*' :: xs) = Left $ RestShouldFollowALiteral (pack r) $ reverse p
     go (InLiteral s) p ('*' :: xs) = go InRest (Literal (reverse s) :: p) xs
+    go (InLiteral []) p ['/'] = Right $ Literal ['/'] :: p
     go (InLiteral s) p ['/'] = Right $ Literal (reverse s) :: p
     go (InLiteral []) p [] = Right p
     go (InLiteral s) p [] = Right $ Literal (reverse s) :: p
     go (InLiteral s) p (x :: xs) = go (InLiteral $ x :: s) p xs
-    go (InParam s) p r@('}' :: xs) = 
+    go (InParam s) p r@('}' :: xs) =
       let name = reverse s
           param = Param name
       in do
@@ -116,8 +117,8 @@ matcher s (MkParsedPattern ls) = go ls (unpack s) $ MkPath s [] ""
     go _ _ _ = Nothing
 
 export
-pattern : Monad m 
-  => Alternative m 
+pattern : Monad m
+  => Alternative m
   => (str : String)
   -> {auto 0 ok : IsRight (Path.parse str)}
   -> (

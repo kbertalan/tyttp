@@ -26,6 +26,9 @@ main = do
         , get $ pattern "/parsed" $ Simple.search $ \ctx => do
             putStrLn "serving parsed"
             sendText (show ctx.request.url.search) ctx >>= status OK
+        , get $ pattern "/" $ \ctx => do
+            putStrLn "serving root"
+            sendText "welcome adventurer" ctx >>= status OK
         ]
 
   let Just port = options.listenOptions.port | Nothing => pure ()
