@@ -18,10 +18,10 @@ export
 Bifunctor (Context me u v h1 s h2) where
   bimap f g step = { request $= map f, response $= map g } step
 
-private
+export
 infixr 0 :>
 
-private
+export
 infixr 0 :>>
 
 export
