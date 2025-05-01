@@ -5,7 +5,6 @@ modules = TyTTP.HTTP.Consumer.JSON
 
 depends = tyttp
   , promise
-  , contrib
   , json
   , sop
   , elab-util
