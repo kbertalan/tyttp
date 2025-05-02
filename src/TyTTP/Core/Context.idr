@@ -18,7 +18,11 @@ export
 Bifunctor (Context me u v h1 s h2) where
   bimap f g step = { request $= map f, response $= map g } step
 
-infixr 0 :>, :>>
+export
+infixr 0 :>
+
+export
+infixr 0 :>>
 
 export
 (:>) : MonadTrans t

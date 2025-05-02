@@ -20,7 +20,6 @@ modules = TyTTP
 
 depends = base
   , apache-mime-types
-  , contrib
   , promise
 
 sourcedir = "src"
