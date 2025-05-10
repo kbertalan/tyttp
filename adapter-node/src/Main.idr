@@ -1,5 +1,7 @@
 module Main
 
+import Data.List
+
 import TyTTP.Adapter.Node.HTTP
 import TyTTP.HTTP
 import TyTTP.URL
@@ -29,6 +31,14 @@ main = do
         , get $ pattern "/" $ \ctx => do
             putStrLn "serving root"
             sendText "welcome adventurer" ctx >>= status OK
+        , get $ pattern "/example/{id}" $ \ctx => do
+            let maybeId = lookup "id" ctx.request.url.path.params
+            putStrLn $ "parameters: \{show ctx.request.url.path.params}"
+            sendText "id: \{show maybeId}" ctx >>= status OK
+        , get $ pattern "/example/{id}/*" $ \ctx => do
+            let maybeId = lookup "id" ctx.request.url.path.params
+            putStrLn $ "parameters: \{show ctx.request.url.path.params} and rest: \{ctx.request.url.path.rest}"
+            sendText "id: \{show maybeId} and rest: \{show ctx.request.url.path.rest}" ctx >>= status OK
         ]
 
   let Just port = options.listenOptions.port | Nothing => pure ()
