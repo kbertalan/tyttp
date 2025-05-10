@@ -110,9 +110,10 @@ matcher s (MkParsedPattern ls) = go ls (unpack s) $ MkPath s [] ""
         then Nothing
         else go (Literal l :: ps) (assert_smaller xs remaining) $ { params $= ((pack param, pack value)::) } p
     go (Param param :: Nil) xs p =
-      if null xs
+      let (value, remaining) = List.break (=='/') xs
+      in if null value || not (null remaining)
       then Nothing
-      else Just $ { params $= ((pack param, pack xs)::) } p
+      else Just $ { params $= ((pack param, pack value)::) } p
     go (Rest :: Nil) xs p = Just $ { rest := pack xs } p
     go _ _ _ = Nothing
 
